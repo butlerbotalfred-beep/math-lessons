@@ -1,0 +1,469 @@
+<!doctype html><html><head><meta charset=utf8><link rel="apple-touch-icon" href="../icon.png"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<script src="../app.js"></script>
+<title>Review Day: Sums of 5</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one centred column. Score strip, then the video stage (quiz cards pop up over it), chapters, and a live score card. */
+:root {
+  --bg: #f5f3ff; --surface: #ffffff; --ink: #1e1b4b; --muted: #5b5785; --accent: #7c5cff; --chip: #ede9fe; --line: #ddd6fe;
+  --good: #16a34a; --good-soft: #dcfce7; --bad: #dc2626; --bad-soft: #fee2e2; --gold: #f59e0b; --scrim: rgba(30, 27, 75, 0.55);
+  --block: #3b82f6; --paper: #fffef8; --rule: #60a5fa; --box: #dbeafe;
+  --display: "Fredoka", "Trebuchet MS", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #13112a; --surface: #1e1b3a; --ink: #f5f3ff; --muted: #b4aedb; --accent: #a78bfa; --chip: #2a2550; --line: #3b3570;
+  --good: #4ade80; --good-soft: #14361f; --bad: #f87171; --bad-soft: #3f1a1a; --gold: #fbbf24; --scrim: rgba(8, 6, 24, 0.66); --block: #60a5fa; --paper: #1b1936; --rule: #3b82f6; --box: #1e2a4a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #13112a; --surface: #1e1b3a; --ink: #f5f3ff; --muted: #b4aedb; --accent: #a78bfa; --chip: #2a2550; --line: #3b3570;
+  --good: #4ade80; --good-soft: #14361f; --bad: #f87171; --bad-soft: #3f1a1a; --gold: #fbbf24; --scrim: rgba(8, 6, 24, 0.66); --block: #60a5fa; --paper: #1b1936; --rule: #3b82f6; --box: #1e2a4a; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--display); }
+.wrap { max-width: 1100px; margin: 0 auto; padding-block: 20px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 14px; }
+h1 { margin: 0; font-size: clamp(26px, 4.5vw, 40px); font-weight: 700; text-wrap: balance; }
+.sub { margin: 0; color: var(--muted); font-size: 17px; line-height: 1.5; max-width: 65ch; }
+button { font-family: var(--display); }
+button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.scorebar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 16px; padding: 10px 14px; }
+.score { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.score small { font-size: 15px; color: var(--muted); font-weight: 500; }
+.dots { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; min-width: 0; }
+.dot { width: 30px; height: 30px; border-radius: 50%; border: 2px dashed var(--line); display: grid; place-items: center;
+  font-size: 14px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.dot.p4 { background: var(--good); border: 0; color: #fff; }
+.dot.p3, .dot.p2 { background: var(--gold); border: 0; color: #fff; }
+.dot.p1 { background: var(--accent); border: 0; color: #fff; }
+.dot.skip { border-style: solid; }
+.dot.now { border-style: solid; border-color: var(--accent); color: var(--accent); }
+.tools { display: flex; gap: 8px; }
+.btn { font-size: 15px; font-weight: 600; color: var(--ink); background: var(--chip); border: 1px solid var(--line); border-radius: 12px;
+  padding: 8px 14px; cursor: pointer; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.stage { position: relative; container-type: inline-size; container-name: stage; border-radius: 18px; overflow: hidden; background: #000;
+  box-shadow: 0 12px 40px rgba(30, 27, 75, 0.25); }
+video { width: 100%; max-width: 100%; aspect-ratio: 16 / 9; display: block; background: #000; }
+.quiz { position: absolute; inset: 0; display: grid; place-items: center; padding: 3cqw; background: var(--scrim); }
+.card { width: min(100%, 780px); max-height: 100%; overflow: auto; background: var(--surface); color: var(--ink); border-radius: 22px;
+  padding: clamp(14px, 2.4cqw, 26px); display: grid; gap: clamp(8px, 1.4cqw, 14px); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35); }
+.qhead { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 15px; color: var(--muted); font-weight: 600; }
+.worth { background: var(--chip); color: var(--accent); border-radius: 999px; padding: 4px 12px; font-weight: 700; }
+.visual { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.vchip { min-width: 46px; height: 46px; padding: 0 10px; border-radius: 12px; background: var(--chip); border: 1px solid var(--line);
+  display: grid; place-items: center; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.vchip.q { color: var(--accent); border: 2px dashed var(--accent); background: transparent; }
+.vblocks { display: grid; grid-template-columns: repeat(3, 18px); gap: 3px; align-content: center; padding: 6px 10px; border-radius: 12px; background: var(--chip); border: 1px solid var(--line); }
+.vblocks i { width: 18px; height: 18px; background: var(--block); border-radius: 3px; }
+.swatch { width: 46px; height: 46px; border-radius: 12px; box-shadow: inset 0 -6px 0 rgba(0, 0, 0, 0.18); }
+.prompt { margin: 0; font-size: clamp(22px, 3.2cqw, 32px); font-weight: 700; text-align: center; text-wrap: balance; }
+.opts { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(8px, 1.2cqw, 12px); }
+.opt { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 64px; padding: 10px 14px; border-radius: 16px;
+  border: 2px solid var(--line); background: var(--surface); color: var(--ink); font-size: clamp(18px, 2.4cqw, 24px); font-weight: 600;
+  cursor: pointer; text-align: center; line-height: 1.2; transition: transform 0.12s; }
+.opt:hover:not(:disabled) { border-color: var(--accent); transform: translateY(-2px); }
+.opt .swatch { width: 34px; height: 34px; border-radius: 9px; flex: none; }
+.opt.wrong { border-color: var(--bad); background: var(--bad-soft); color: var(--muted); text-decoration: line-through; cursor: default; }
+.opt.right { border-color: var(--good); background: var(--good-soft); color: var(--ink); }
+.opt.shake { animation: shake 0.4s; }
+@keyframes shake { 20% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(5px); } }
+.feedback { min-height: 1.4em; text-align: center; font-size: clamp(18px, 2.4cqw, 22px); font-weight: 700; margin: 0; }
+.feedback.good { color: var(--good); }
+.feedback.bad { color: var(--bad); }
+.qfoot { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.final { text-align: center; justify-items: center; }
+.big { font-size: clamp(44px, 8cqw, 76px); font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.big small { font-size: 0.45em; color: var(--muted); }
+.stars { display: flex; gap: 6px; }
+.stars svg { width: clamp(34px, 5cqw, 52px); height: clamp(34px, 5cqw, 52px); }
+@container stage (max-width: 640px) {
+  .quiz { position: static; background: var(--surface); padding: 12px; }
+  .card { box-shadow: none; padding: 4px; }
+  .opts { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { .opt.shake { animation: none; } .opt { transition: none; } }
+
+.chapters { display: flex; flex-wrap: wrap; gap: 8px; }
+.chapters button { font-size: 15px; font-weight: 500; color: var(--ink); background: var(--chip); border: 1px solid var(--line);
+  border-radius: 999px; padding: 8px 14px; cursor: pointer; display: flex; gap: 8px; align-items: baseline; }
+.chapters button .t { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 13px; }
+.chapters button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.chapters button.on .t { color: #fff; }
+.sheet { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; display: grid; gap: 8px; }
+.sheet h2 { margin: 0; font-size: 20px; }
+.sheet p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.5; max-width: 70ch; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; }
+td.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* On-screen worksheet: laid out like printed page 47, three parts separated by blue rules. */
+.ws { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: clamp(14px, 3vw, 28px); display: grid; gap: 18px; }
+.ws-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; }
+.ws-head h2 { margin: 0; font-size: 24px; }
+.ws-head .pg { color: var(--muted); font-size: 15px; font-weight: 600; }
+.part { display: grid; gap: 14px; padding-top: 16px; border-top: 3px solid var(--rule); }
+.part h3 { margin: 0; font-size: 19px; font-weight: 600; }
+.part h3 span { color: var(--muted); font-weight: 500; font-size: 15px; }
+.sums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 18px; }
+.fact { display: flex; align-items: center; gap: 8px; font-size: clamp(24px, 4vw, 32px); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ans { width: 2.1em; height: 1.7em; font: 600 1em var(--display); text-align: center; color: var(--ink); background: var(--box);
+  border: 2px solid var(--line); border-radius: 10px; padding: 0; }
+.ans:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+.ans.ok { border-color: var(--good); background: var(--good-soft); }
+.ans.no { border-color: var(--bad); background: var(--bad-soft); }
+.pics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.pic { display: grid; gap: 10px; justify-items: center; padding: 12px; border: 1px dashed var(--line); border-radius: 14px; }
+.groups { display: flex; gap: 34px; align-items: flex-start; min-height: 64px; }
+.grp { display: grid; gap: 3px; justify-items: start; }
+.grp div { display: flex; gap: 3px; }
+.grp i { width: 26px; height: 26px; background: var(--block); }
+.cols { display: flex; flex-wrap: wrap; gap: 16px 22px; }
+.col { display: grid; justify-items: end; gap: 6px; font-size: clamp(26px, 4vw, 32px); font-variant-numeric: tabular-nums; }
+.col .row { display: flex; align-items: center; gap: 6px; }
+.col .bar { width: 100%; border-top: 3px solid var(--ink); }
+.col.given { color: var(--muted); }
+.col .num { width: 2.1em; text-align: center; }
+.howmany { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 19px; }
+.ws-foot { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.ws-result { margin: 0; font-size: 19px; font-weight: 700; }
+.ws-result.good { color: var(--good); }
+.note { margin: 0; font-size: 15px; color: var(--bad); font-weight: 600; min-height: 1.2em; }
+@media (max-width: 640px) { .sums { grid-template-columns: repeat(2, minmax(0, 1fr)); } .pics { grid-template-columns: 1fr; } }
+</style>
+
+<div class="wrap">
+  <h1>Review Day: Sums and the Sums of 5</h1>
+  <p class="sub">A lesson for page 47, Review. The video stops for 10 questions. Getting it right on the first try is worth 4 points, then 3, 2 and 1. After the video, fill in the worksheet below and check your answers.</p>
+
+  <div class="scorebar" aria-live="polite">
+    <div class="score" id="score">0 <small>/ 40 points</small></div>
+    <div class="dots" id="dots" aria-label="Questions"></div>
+    <div class="tools">
+      <button class="btn" id="fs" type="button">Full screen</button>
+      <button class="btn" id="restart" type="button">Start over</button>
+    </div>
+  </div>
+
+  <div class="stage" id="stage">
+    <video id="v" src="lesson.mp4" controls playsinline preload="auto" controlslist="nofullscreen nodownload" disablepictureinpicture></video>
+    <div class="quiz" id="quiz" hidden></div>
+  </div>
+
+  <div class="chapters" id="ch" aria-label="Chapters"></div>
+
+
+  <section class="ws" id="worksheet" aria-labelledby="ws-title">
+    <div class="ws-head"><h2 id="ws-title">Worksheet: page 47</h2><span class="pg">Review · type each answer in a box</span></div>
+    <div class="part">
+      <h3>Find the sum.</h3>
+      <div class="sums" id="ws-sums"></div>
+    </div>
+    <div class="part">
+      <h3>Write the addition sentences. <span>Count the first group, then the second group, then all of them.</span></h3>
+      <div class="pics" id="ws-pics"></div>
+    </div>
+    <div class="part">
+      <h3>Write the sums of 5. <span>The first one is done for you.</span></h3>
+      <div class="cols" id="ws-five"></div>
+      <p class="note" id="ws-five-note" aria-live="polite"></p>
+      <div class="howmany"><label for="ws-howmany">How many facts are there for the sum of 5?</label><input class="ans" id="ws-howmany" inputmode="numeric" maxlength="2" autocomplete="off"></div>
+    </div>
+    <div class="ws-foot">
+      <button class="btn primary" id="ws-check" type="button">Check my answers</button>
+      <button class="btn" id="ws-clear" type="button">Clear the page</button>
+      <p class="ws-result" id="ws-result" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <section class="sheet">
+    <h2>Score card</h2>
+    <p id="best">Press play to start. Answers are scored as he goes.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>#</th><th>Question</th><th>Tries</th><th>Points</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table></div>
+  </section>
+</div>
+<audio id="voice" preload="auto"></audio>
+
+<script>
+const QUIZ = {"questions": [{"id": "q1", "prompt": "5 + 0 = ?", "choices": ["0", "5", "6", "50"], "answer": 1, "visual": ["b:5", "+", "0", "=", "?"], "t": 44.49, "resume": 44.49}, {"id": "q2", "prompt": "Start at 7 and count on 1. What is 7 + 1?", "choices": ["6", "7", "8", "9"], "answer": 2, "visual": ["7", "+", "1", "=", "?"], "t": 70.16, "resume": 70.16}, {"id": "q3", "prompt": "4 + 1 = 5. So what is 1 + 4?", "choices": ["3", "4", "5", "14"], "answer": 2, "visual": ["4 + 1 = 5", "1 + 4 = ?"], "t": 94.7, "resume": 94.7}, {"id": "q4", "prompt": "Which addition sentence matches the blocks?", "choices": ["2 + 5 = 7", "2 + 5 = 8", "2 + 2 = 4", "5 + 5 = 10"], "answer": 0, "visual": ["b:2", "b:5"], "t": 143.37, "resume": 143.37}, {"id": "q5", "prompt": "Move one more block. What will it be?", "choices": ["2 + 2", "3 + 2", "1 + 1", "1 + 4"], "answer": 0, "visual": ["0 + 4", "1 + 3", "?"], "t": 171.62, "resume": 173.37}, {"id": "q6", "prompt": "What stays the same?", "choices": ["The first number", "The second number", "The total: always 4", "Nothing stays the same"], "answer": 2, "visual": ["0 + 4", "1 + 3", "2 + 2", "3 + 1", "4 + 0"], "t": 189.91, "resume": 191.66}, {"id": "q7", "prompt": "How many facts are there for the sum of 4?", "choices": ["4", "5", "3", "6"], "answer": 1, "visual": ["0 + 4", "1 + 3", "2 + 2", "3 + 1", "4 + 0"], "t": 201.53, "resume": 203.28}, {"id": "q8", "prompt": "Which one is NOT a sum of 4?", "choices": ["1 + 3", "1 + 2", "4 + 0", "2 + 2"], "answer": 1, "visual": [], "t": 219.96, "resume": 219.96}, {"id": "q9", "prompt": "0 + 6 = ?", "choices": ["0", "6", "7", "60"], "answer": 1, "visual": ["0", "+", "6", "=", "?"], "t": 231.35, "resume": 231.35}, {"id": "q10", "prompt": "Start at 7 and count on 2. What is 7 + 2?", "choices": ["8", "9", "10", "5"], "answer": 1, "visual": ["7", "+", "2", "=", "?"], "t": 235.63, "resume": 235.63}], "total": 258.092, "chapters": [["Review Day!", 0.0], ["Find the Sum", 26.3], ["Write the Addition Sentence", 96.3], ["Making Four", 144.9], ["You're Ready!", 221.5]]};
+const COLORS = { red: "#ef4444", blue: "#3b82f6", green: "#22c55e", yellow: "#facc15" };
+const v = document.getElementById("v"), quiz = document.getElementById("quiz"), voice = document.getElementById("voice");
+const Q = QUIZ.questions, MAX = Q.length * 4;
+let state, prevT = 0, active = null, autoTimer = null;
+
+function fresh() { state = Q.map(() => ({ tries: 0, points: 0, done: false, skipped: false })); }
+function total() { return state.reduce((a, s) => a + s.points, 0); }
+function fmt(s) { s = Math.floor(s); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+function say(name) { try { voice.src = "audio/" + name + ".mp3"; voice.currentTime = 0; voice.play().catch(() => {}); } catch (e) {} }
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function swatch(name) { const s = el("span", "swatch"); s.style.background = COLORS[name.toLowerCase()]; return s; }
+function blocks(n, cls = "vblocks") { const b = el("span", cls); b.setAttribute("aria-label", n + " blocks"); for (let i = 0; i < n; i++) b.appendChild(el("i")); return b; }
+function plain(c) { return c.startsWith("c:") ? c.slice(2) : c; }
+
+// ---- score strip and score card ----
+function renderScore() {
+  document.getElementById("score").innerHTML = `${total()} <small>/ ${MAX} points</small>`;
+  const dots = document.getElementById("dots"); dots.textContent = "";
+  Q.forEach((q, i) => {
+    const s = state[i], d = el("span", "dot");
+    if (s.done) { d.classList.add("p" + s.points); d.textContent = s.points; d.title = `Question ${i + 1}: ${s.points} points`; }
+    else if (s.skipped) { d.classList.add("skip"); d.textContent = "–"; d.title = `Question ${i + 1}: skipped`; }
+    else { d.textContent = i + 1; d.title = `Question ${i + 1}`; if (active === i) d.classList.add("now"); }
+    dots.appendChild(d);
+  });
+  const rows = document.getElementById("rows"); rows.textContent = "";
+  Q.forEach((q, i) => {
+    const s = state[i], tr = el("tr");
+    tr.appendChild(el("td", "n", i + 1));
+    tr.appendChild(el("td", "", q.prompt));
+    tr.appendChild(el("td", "n", s.done ? String(s.tries) : s.skipped ? "skipped" : "–"));
+    tr.appendChild(el("td", "n", s.done ? `${s.points} / 4` : "–"));
+    rows.appendChild(tr);
+  });
+}
+
+// ---- question card ----
+function showQuestion(i) {
+  const q = Q[i], s = state[i];
+  active = i; clearTimeout(autoTimer);
+  if (document.fullscreenElement && document.fullscreenElement !== document.getElementById("stage")) document.exitFullscreen().catch(() => {});
+  quiz.textContent = "";
+  const card = el("div", "card"); card.setAttribute("role", "dialog"); card.setAttribute("aria-label", `Question ${i + 1}`);
+  const head = el("div", "qhead");
+  head.appendChild(el("span", "", `Question ${i + 1} of ${Q.length}`));
+  const worth = el("span", "worth"); head.appendChild(worth);
+  card.appendChild(head);
+  if (q.visual.length) {
+    const vis = el("div", "visual");
+    q.visual.forEach(x => vis.appendChild(x.startsWith("c:") ? swatch(x.slice(2)) : x.startsWith("b:") ? blocks(+x.slice(2)) : el("span", "vchip" + (x === "?" ? " q" : ""), x)));
+    card.appendChild(vis);
+  }
+  card.appendChild(el("h2", "prompt", q.prompt));
+  const opts = el("div", "opts");
+  const fb = el("p", "feedback"); fb.setAttribute("aria-live", "assertive");
+  const updateWorth = () => { worth.textContent = s.done ? `+${s.points} points` : `Worth ${Math.max(1, 4 - s.tries)} points`; };
+  q.choices.forEach((c, k) => {
+    const b = el("button", "opt"); b.type = "button";
+    if (c.startsWith("c:")) b.appendChild(swatch(c.slice(2)));
+    b.appendChild(el("span", "", plain(c)));
+    b.onclick = () => {
+      if (s.done || b.disabled) return;
+      s.tries++;
+      if (k === q.answer) {
+        s.done = true; s.points = Math.max(1, 5 - s.tries);
+        b.classList.add("right");
+        [...opts.children].forEach(o => o.disabled = true);
+        fb.className = "feedback good";
+        fb.textContent = s.points === 4 ? `Right on the first try! +4 points` : `That's it! +${s.points} points`;
+        say("right" + (1 + (i % 4)));
+        updateWorth(); renderScore(); cont.hidden = false; cont.focus();
+        autoTimer = setTimeout(resume, 3200);
+      } else {
+        b.classList.add("wrong", "shake"); b.disabled = true;
+        fb.className = "feedback bad";
+        fb.textContent = `Not quite. Try again! Now worth ${Math.max(1, 4 - s.tries)} points.`;
+        say(s.tries % 2 ? "wrong1" : "wrong2");
+        updateWorth();
+      }
+    };
+    opts.appendChild(b);
+  });
+  card.appendChild(opts);
+  card.appendChild(fb);
+  const foot = el("div", "qfoot");
+  const again = el("button", "btn", "Hear it again"); again.type = "button"; again.onclick = () => say(q.id);
+  const cont = el("button", "btn primary", "Keep watching"); cont.type = "button"; cont.hidden = true; cont.onclick = resume;
+  foot.appendChild(again); foot.appendChild(cont);
+  card.appendChild(foot);
+  quiz.appendChild(card);
+  quiz.hidden = false;
+  updateWorth(); renderScore();
+  say(q.id);
+  opts.firstChild.focus({ preventScroll: true });
+}
+function resume() {
+  clearTimeout(autoTimer);
+  if (active == null) return;
+  const q = Q[active];
+  active = null; quiz.hidden = true; voice.pause();
+  v.currentTime = q.resume; prevT = q.resume;
+  renderScore();
+  v.play().catch(() => {});
+}
+
+// ---- final card ----
+function showFinal() {
+  active = null; clearTimeout(autoTimer);
+  Q.forEach((q, i) => { if (!state[i].done) state[i].skipped = true; });
+  renderScore();
+  const pts = total(), pct = pts / MAX, stars = pct >= 0.9 ? 3 : pct >= 0.7 ? 2 : 1;
+  try { LessonApp.quiz(pts, MAX, state.filter(s => s.points === 4).length); } catch (e) {}
+  quiz.textContent = "";
+  const card = el("div", "card final"); card.setAttribute("role", "dialog"); card.setAttribute("aria-label", "Final score");
+  card.appendChild(el("div", "qhead", "Lesson complete"));
+  const big = el("div", "big"); big.innerHTML = `${pts} <small>/ ${MAX}</small>`; card.appendChild(big);
+  const st = el("div", "stars");
+  for (let k = 0; k < 3; k++) st.innerHTML += `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="${k < stars ? "var(--gold)" : "var(--line)"}" d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>`;
+  card.appendChild(st);
+  const msg = pct >= 0.9 ? "Amazing, math detective! You know all your tricks."
+            : pct >= 0.7 ? "Great work! You got most of them."
+            : "Good effort! Watch it again and try for more points.";
+  card.appendChild(el("h2", "prompt", msg));
+  const firsts = state.filter(s => s.points === 4).length;
+  card.appendChild(el("p", "feedback", `${firsts} of ${Q.length} right on the first try`));
+  const foot = el("div", "qfoot");
+  const again = el("button", "btn primary", "Watch again"); again.type = "button"; again.onclick = restart;
+  foot.appendChild(again); card.appendChild(foot);
+  quiz.appendChild(card); quiz.hidden = false;
+  say("done");
+  let best = null;
+  try { best = parseInt(localStorage.getItem("sums47-best") || "", 10); if (!(best >= pts)) localStorage.setItem("sums47-best", String(pts)); } catch (e) {}
+  document.getElementById("best").textContent = `Finished with ${pts} of ${MAX} points.` + (best >= 0 && !isNaN(best) ? ` Best so far on this device: ${Math.max(best, pts)}.` : "");
+}
+function restart() {
+  fresh(); active = null; clearTimeout(autoTimer); quiz.hidden = true; voice.pause();
+  v.currentTime = 0; prevT = 0; renderScore();
+  document.getElementById("best").textContent = "Answers are scored as he goes.";
+  v.play().catch(() => {});
+}
+
+// ---- watch playback and stop at each question ----
+function tick() {
+  if (!v.paused && active == null) {
+    const t = v.currentTime;
+    if (t - prevT < 1.5) {
+      for (let i = 0; i < Q.length; i++) {
+        const s = state[i];
+        if (!s.done && prevT < Q[i].t && Q[i].t <= t + 0.04) { v.pause(); v.currentTime = Q[i].t; showQuestion(i); break; }
+      }
+    }
+    prevT = t;
+  }
+  requestAnimationFrame(tick);
+}
+v.addEventListener("seeked", () => { if (active == null) prevT = v.currentTime; });
+v.addEventListener("play", () => { if (active != null) { v.pause(); } });
+v.addEventListener("ended", showFinal);
+
+// ---- chapters, full screen, restart ----
+const ch = document.getElementById("ch");
+QUIZ.chapters.forEach(([name, t], i) => {
+  const b = el("button"); b.type = "button"; b.id = "chapter-" + (i + 1);
+  b.appendChild(el("span", "t", fmt(t))); b.appendChild(el("span", "", name));
+  b.onclick = () => { if (active != null) return; quiz.hidden = true; v.currentTime = t; prevT = t; v.play().catch(() => {}); };
+  ch.appendChild(b);
+});
+v.addEventListener("timeupdate", () => {
+  const t = v.currentTime;
+  [...ch.children].forEach((b, i) => {
+    const end = i + 1 < QUIZ.chapters.length ? QUIZ.chapters[i + 1][1] : 1e9;
+    b.classList.toggle("on", t >= QUIZ.chapters[i][1] && t < end);
+  });
+});
+document.getElementById("fs").onclick = () => {
+  const s = document.getElementById("stage");
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  else if (s.requestFullscreen) s.requestFullscreen().catch(() => {});
+};
+document.getElementById("restart").onclick = restart;
+
+
+// ---- on-screen worksheet (page 47) ----
+const WS = {
+  sums: [[0, 0], [1, 1], [2, 2], [3, 3], [2, 3], [4, 2], [1, 0], [0, 2], [2, 1], [1, 3], [3, 2], [2, 4]],
+  pics: [[[3, 2], [1]], [[2], [2, 2]], [[1], [3, 2]], [[2, 2], [2]]],   // block groups as rows, as printed
+};
+const wsInputs = [];
+function wsInput(id, label) {
+  const i = el("input", "ans"); i.id = id; i.inputMode = "numeric"; i.maxLength = 2; i.autocomplete = "off"; i.setAttribute("aria-label", label);
+  i.addEventListener("input", () => { i.value = i.value.replace(/[^0-9]/g, ""); i.classList.remove("ok", "no"); wsSave(); document.getElementById("ws-result").textContent = ""; });
+  wsInputs.push(i); return i;
+}
+function wsBuild() {
+  const sums = document.getElementById("ws-sums");
+  WS.sums.forEach(([a, b], k) => {
+    const f = el("div", "fact"); f.appendChild(el("span", "", `${a} + ${b} =`));
+    f.appendChild(wsInput("ws-s" + k, `${a} plus ${b} equals`)); sums.appendChild(f);
+  });
+  const pics = document.getElementById("ws-pics");
+  WS.pics.forEach((pic, k) => {
+    const box = el("div", "pic"), groups = el("div", "groups");
+    pic.forEach(rows => { const g = el("div", "grp"); rows.forEach(n => { const r = el("div"); for (let j = 0; j < n; j++) r.appendChild(el("i")); g.appendChild(r); }); groups.appendChild(g); });
+    groups.setAttribute("role", "img"); groups.setAttribute("aria-label", `Picture ${k + 1}: two groups of blue blocks`);
+    box.appendChild(groups);
+    const f = el("div", "fact");
+    f.appendChild(wsInput(`ws-p${k}a`, `Picture ${k + 1}, first group`)); f.appendChild(el("span", "", "+"));
+    f.appendChild(wsInput(`ws-p${k}b`, `Picture ${k + 1}, second group`)); f.appendChild(el("span", "", "="));
+    f.appendChild(wsInput(`ws-p${k}c`, `Picture ${k + 1}, in all`));
+    box.appendChild(f); pics.appendChild(box);
+  });
+  const five = document.getElementById("ws-five");
+  for (let k = 0; k < 6; k++) {
+    const c = el("div", "col" + (k === 0 ? " given" : ""));
+    const top = el("div", "row"), bot = el("div", "row");
+    if (k === 0) { top.appendChild(el("span", "num", "0")); bot.appendChild(el("span", "", "+")); bot.appendChild(el("span", "num", "5")); }
+    else { top.appendChild(wsInput(`ws-f${k}a`, `Sum of 5 number ${k + 1}, top`)); bot.appendChild(el("span", "", "+")); bot.appendChild(wsInput(`ws-f${k}b`, `Sum of 5 number ${k + 1}, bottom`)); }
+    c.appendChild(top); c.appendChild(bot); c.appendChild(el("div", "bar")); c.appendChild(el("span", "num", "5"));
+    five.appendChild(c);
+  }
+  const hm = document.getElementById("ws-howmany");
+  hm.addEventListener("input", () => { hm.value = hm.value.replace(/[^0-9]/g, ""); hm.classList.remove("ok", "no"); wsSave(); });
+  wsInputs.push(hm);
+  wsLoad();
+}
+const $v = id => document.getElementById(id).value.trim();
+const mark = (id, ok) => { const i = document.getElementById(id); i.classList.toggle("ok", ok); i.classList.toggle("no", !ok); };
+function wsCheck() {
+  let right = 0, total = 0, empty = 0;
+  const score = ok => { total++; if (ok) right++; };
+  wsInputs.forEach(i => { if (!i.value) empty++; });
+  WS.sums.forEach(([a, b], k) => { const ok = $v("ws-s" + k) === String(a + b); mark("ws-s" + k, ok); score(ok); });
+  WS.pics.forEach((pic, k) => {
+    const n = rows => rows.reduce((x, y) => x + y, 0), A = n(pic[0]), B = n(pic[1]);
+    const oa = $v(`ws-p${k}a`) === String(A), ob = $v(`ws-p${k}b`) === String(B), oc = $v(`ws-p${k}c`) === String(A + B);
+    mark(`ws-p${k}a`, oa); mark(`ws-p${k}b`, ob); mark(`ws-p${k}c`, oc); score(oa && ob && oc);
+  });
+  // sums of 5: any order is fine, but each fact must add to 5 and not repeat one already written
+  const seen = new Set(["0+5"]); let dup = false, notFive = false;
+  for (let k = 1; k < 6; k++) {
+    const a = $v(`ws-f${k}a`), b = $v(`ws-f${k}b`), key = `${+a}+${+b}`;
+    let ok = a !== "" && b !== "" && +a + +b === 5;
+    if (ok && seen.has(key)) { ok = false; dup = true; } else if (!ok && a !== "" && b !== "") notFive = true;
+    if (ok) seen.add(key);
+    mark(`ws-f${k}a`, ok); mark(`ws-f${k}b`, ok); score(ok);
+  }
+  document.getElementById("ws-five-note").textContent = dup ? "Two of your facts are the same. Each fact needs to be different." : notFive ? "Each top and bottom number must add up to 5." : "";
+  const hm = $v("ws-howmany") === "6"; mark("ws-howmany", hm); score(hm);
+  const res = document.getElementById("ws-result");
+  res.className = "ws-result" + (right === total ? " good" : "");
+  res.textContent = right === total ? `All ${total} problems right. Great job, math detective!`
+    : `${right} of ${total} problems right.` + (empty ? " Some boxes are still empty." : " Fix the red boxes and check again.");
+  try { localStorage.setItem("sums47-ws-checked", "1"); } catch (e) {}
+  try { LessonApp.sheet(right, total); } catch (e) {}
+}
+function wsSave() { try { localStorage.setItem("sums47-ws", JSON.stringify(wsInputs.map(i => i.value))); } catch (e) {} }
+function wsLoad() { try { const v = JSON.parse(localStorage.getItem("sums47-ws") || "[]"); wsInputs.forEach((i, k) => { if (v[k]) i.value = v[k]; }); } catch (e) {} }
+let clearArmed = null;
+document.getElementById("ws-check").onclick = wsCheck;
+document.getElementById("ws-clear").onclick = e => {
+  const b = e.currentTarget;
+  if (!clearArmed) { b.textContent = "Tap again to clear"; clearArmed = setTimeout(() => { b.textContent = "Clear the page"; clearArmed = null; }, 3000); return; }
+  clearTimeout(clearArmed); clearArmed = null; b.textContent = "Clear the page";
+  wsInputs.forEach(i => { i.value = ""; i.classList.remove("ok", "no"); });
+  document.getElementById("ws-result").textContent = ""; document.getElementById("ws-five-note").textContent = ""; wsSave();
+};
+wsBuild();
+
+fresh(); renderScore(); requestAnimationFrame(tick);
+</script>
+
+<link rel="stylesheet" href="../app.css">
+<link rel="stylesheet" href="../pip.css">
+<script src="../pip.js"></script>
+</body></html>

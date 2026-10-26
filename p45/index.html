@@ -1,0 +1,320 @@
+<!doctype html><html><head><meta charset=utf8><link rel="apple-touch-icon" href="../icon.png"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<script src="../app.js"></script>
+<title>Patterns Don't Always Repeat!</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one centred column. Score strip, then the video stage (quiz cards pop up over it), chapters, and a live score card. */
+:root {
+  --bg: #f5f3ff; --surface: #ffffff; --ink: #1e1b4b; --muted: #5b5785; --accent: #7c5cff; --chip: #ede9fe; --line: #ddd6fe;
+  --good: #16a34a; --good-soft: #dcfce7; --bad: #dc2626; --bad-soft: #fee2e2; --gold: #f59e0b; --scrim: rgba(30, 27, 75, 0.55);
+  --display: "Fredoka", "Trebuchet MS", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #13112a; --surface: #1e1b3a; --ink: #f5f3ff; --muted: #b4aedb; --accent: #a78bfa; --chip: #2a2550; --line: #3b3570;
+  --good: #4ade80; --good-soft: #14361f; --bad: #f87171; --bad-soft: #3f1a1a; --gold: #fbbf24; --scrim: rgba(8, 6, 24, 0.66); color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #13112a; --surface: #1e1b3a; --ink: #f5f3ff; --muted: #b4aedb; --accent: #a78bfa; --chip: #2a2550; --line: #3b3570;
+  --good: #4ade80; --good-soft: #14361f; --bad: #f87171; --bad-soft: #3f1a1a; --gold: #fbbf24; --scrim: rgba(8, 6, 24, 0.66); color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--display); }
+.wrap { max-width: 1100px; margin: 0 auto; padding-block: 20px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 14px; }
+h1 { margin: 0; font-size: clamp(26px, 4.5vw, 40px); font-weight: 700; text-wrap: balance; }
+.sub { margin: 0; color: var(--muted); font-size: 17px; line-height: 1.5; max-width: 65ch; }
+button { font-family: var(--display); }
+button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.scorebar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 16px; padding: 10px 14px; }
+.score { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.score small { font-size: 15px; color: var(--muted); font-weight: 500; }
+.dots { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; min-width: 0; }
+.dot { width: 30px; height: 30px; border-radius: 50%; border: 2px dashed var(--line); display: grid; place-items: center;
+  font-size: 14px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.dot.p4 { background: var(--good); border: 0; color: #fff; }
+.dot.p3, .dot.p2 { background: var(--gold); border: 0; color: #fff; }
+.dot.p1 { background: var(--accent); border: 0; color: #fff; }
+.dot.skip { border-style: solid; }
+.dot.now { border-style: solid; border-color: var(--accent); color: var(--accent); }
+.tools { display: flex; gap: 8px; }
+.btn { font-size: 15px; font-weight: 600; color: var(--ink); background: var(--chip); border: 1px solid var(--line); border-radius: 12px;
+  padding: 8px 14px; cursor: pointer; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.stage { position: relative; container-type: inline-size; container-name: stage; border-radius: 18px; overflow: hidden; background: #000;
+  box-shadow: 0 12px 40px rgba(30, 27, 75, 0.25); }
+video { width: 100%; max-width: 100%; aspect-ratio: 16 / 9; display: block; background: #000; }
+.quiz { position: absolute; inset: 0; display: grid; place-items: center; padding: 3cqw; background: var(--scrim); }
+.card { width: min(100%, 780px); max-height: 100%; overflow: auto; background: var(--surface); color: var(--ink); border-radius: 22px;
+  padding: clamp(14px, 2.4cqw, 26px); display: grid; gap: clamp(8px, 1.4cqw, 14px); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35); }
+.qhead { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 15px; color: var(--muted); font-weight: 600; }
+.worth { background: var(--chip); color: var(--accent); border-radius: 999px; padding: 4px 12px; font-weight: 700; }
+.visual { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.vchip { min-width: 46px; height: 46px; padding: 0 10px; border-radius: 12px; background: var(--chip); border: 1px solid var(--line);
+  display: grid; place-items: center; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.vchip.q { color: var(--accent); border: 2px dashed var(--accent); background: transparent; }
+.swatch { width: 46px; height: 46px; border-radius: 12px; box-shadow: inset 0 -6px 0 rgba(0, 0, 0, 0.18); }
+.prompt { margin: 0; font-size: clamp(22px, 3.2cqw, 32px); font-weight: 700; text-align: center; text-wrap: balance; }
+.opts { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(8px, 1.2cqw, 12px); }
+.opt { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 64px; padding: 10px 14px; border-radius: 16px;
+  border: 2px solid var(--line); background: var(--surface); color: var(--ink); font-size: clamp(18px, 2.4cqw, 24px); font-weight: 600;
+  cursor: pointer; text-align: center; line-height: 1.2; transition: transform 0.12s; }
+.opt:hover:not(:disabled) { border-color: var(--accent); transform: translateY(-2px); }
+.opt .swatch { width: 34px; height: 34px; border-radius: 9px; flex: none; }
+.opt.wrong { border-color: var(--bad); background: var(--bad-soft); color: var(--muted); text-decoration: line-through; cursor: default; }
+.opt.right { border-color: var(--good); background: var(--good-soft); color: var(--ink); }
+.opt.shake { animation: shake 0.4s; }
+@keyframes shake { 20% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(5px); } }
+.feedback { min-height: 1.4em; text-align: center; font-size: clamp(18px, 2.4cqw, 22px); font-weight: 700; margin: 0; }
+.feedback.good { color: var(--good); }
+.feedback.bad { color: var(--bad); }
+.qfoot { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.final { text-align: center; justify-items: center; }
+.big { font-size: clamp(44px, 8cqw, 76px); font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.big small { font-size: 0.45em; color: var(--muted); }
+.stars { display: flex; gap: 6px; }
+.stars svg { width: clamp(34px, 5cqw, 52px); height: clamp(34px, 5cqw, 52px); }
+@container stage (max-width: 640px) {
+  .quiz { position: static; background: var(--surface); padding: 12px; }
+  .card { box-shadow: none; padding: 4px; }
+  .opts { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { .opt.shake { animation: none; } .opt { transition: none; } }
+
+.chapters { display: flex; flex-wrap: wrap; gap: 8px; }
+.chapters button { font-size: 15px; font-weight: 500; color: var(--ink); background: var(--chip); border: 1px solid var(--line);
+  border-radius: 999px; padding: 8px 14px; cursor: pointer; display: flex; gap: 8px; align-items: baseline; }
+.chapters button .t { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 13px; }
+.chapters button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.chapters button.on .t { color: #fff; }
+.sheet { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; display: grid; gap: 8px; }
+.sheet h2 { margin: 0; font-size: 20px; }
+.sheet p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.5; max-width: 70ch; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; }
+td.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
+</style>
+
+<div class="wrap">
+  <h1>Patterns Don't Always Repeat!</h1>
+  <p class="sub">A lesson for page 45, Patterns of Addition. The video stops for 12 questions. Getting it right on the first try is worth 4 points, then 3, 2 and 1.</p>
+
+  <div class="scorebar" aria-live="polite">
+    <div class="score" id="score">0 <small>/ 48 points</small></div>
+    <div class="dots" id="dots" aria-label="Questions"></div>
+    <div class="tools">
+      <button class="btn" id="fs" type="button">Full screen</button>
+      <button class="btn" id="restart" type="button">Start over</button>
+    </div>
+  </div>
+
+  <div class="stage" id="stage">
+    <video id="v" src="lesson.mp4" controls playsinline preload="auto" controlslist="nofullscreen nodownload" disablepictureinpicture></video>
+    <div class="quiz" id="quiz" hidden></div>
+  </div>
+
+  <div class="chapters" id="ch" aria-label="Chapters"></div>
+
+  <section class="sheet">
+    <h2>Score card</h2>
+    <p id="best">Press play to start. Answers are scored as he goes.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>#</th><th>Question</th><th>Tries</th><th>Points</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table></div>
+  </section>
+</div>
+<audio id="voice" preload="auto"></audio>
+
+<script>
+const QUIZ = {"questions": [{"id": "q1", "prompt": "What comes next?", "choices": ["c:Red", "c:Blue", "c:Green", "c:Yellow"], "answer": 0, "visual": ["c:red", "c:blue", "c:green", "c:red", "c:blue", "c:green", "?"], "t": 19.2, "resume": 22.35}, {"id": "q2", "prompt": "What comes after 8?", "choices": ["9", "10", "12", "7"], "answer": 1, "visual": ["2", "4", "6", "8", "?"], "t": 92.56, "resume": 95.31}, {"id": "q3", "prompt": "What comes next?", "choices": ["3", "0", "1", "6"], "answer": 2, "visual": ["5", "4", "3", "2", "?"], "t": 118.13, "resume": 120.88}, {"id": "q4", "prompt": "Is 2, 4, 6, 8 a pattern?", "choices": ["Yes! The rule repeats: add 2 each time", "No, because no number repeats", "Yes, because the 2 comes back", "No, only colors make patterns"], "answer": 0, "visual": ["2", "4", "6", "8"], "t": 132.18, "resume": 132.18}, {"id": "q5", "prompt": "Which double comes next?", "choices": ["4 + 3 = 7", "3 + 3 = 6", "4 + 4 = 8", "5 + 4 = 9"], "answer": 2, "visual": ["0 + 0", "1 + 1", "2 + 2", "3 + 3", "?"], "t": 197.18, "resume": 197.18}, {"id": "q6", "prompt": "Row three's answers are 6, 5, 4, 3, 2, 1. What is the rule?", "choices": ["Go up by 1", "Go down by 1", "Go down by 2", "Stay the same"], "answer": 1, "visual": ["6", "5", "4", "3", "2", "1"], "t": 254.01, "resume": 254.01}, {"id": "q7", "prompt": "What's changing?", "choices": ["How many blocks there are in all", "How the blocks are split between the baskets", "The color of the blocks", "The number of baskets"], "answer": 1, "visual": ["5 + 0", "4 + 1", "3 + 2", "2 + 3", "1 + 4", "0 + 5"], "t": 298.48, "resume": 300.23}, {"id": "q8", "prompt": "What stays the same?", "choices": ["The first number", "The second number", "The total: always 5", "Nothing stays the same"], "answer": 2, "visual": ["5 + 0", "4 + 1", "3 + 2", "2 + 3", "1 + 4", "0 + 5"], "t": 308.59, "resume": 310.34}, {"id": "q9", "prompt": "Mystery #1: What comes next?", "choices": ["c:Red", "c:Green", "c:Blue", "c:Yellow"], "answer": 2, "visual": ["c:red", "c:blue", "c:red", "c:blue", "c:red", "?"], "t": 336.59, "resume": 341.54}, {"id": "q10", "prompt": "Mystery #2: What comes next?", "choices": ["7", "5", "2", "6"], "answer": 3, "visual": ["2", "3", "4", "5", "?"], "t": 358.75, "resume": 363.7}, {"id": "q11", "prompt": "Mystery #3: Zero plus what makes three?", "choices": ["0", "1", "2", "3"], "answer": 3, "visual": ["3 + 0 = 3", "2 + 1 = 3", "1 + 2 = 3", "0 + ? = 3"], "t": 385.46, "resume": 390.41}, {"id": "q12", "prompt": "Which one has numbers that never repeat, but a rule that does?", "choices": ["red, blue, red, blue", "1, 2, 1, 2", "2, 4, 6, 8", "circle, square, circle, square"], "answer": 2, "visual": [], "t": 441.89, "resume": 441.89}], "total": 449.616, "chapters": [["You Already Know Patterns!", 0.0], ["Can a Pattern Exist Without Repeating Numbers?", 45.7], ["Patterns Can Hide Inside Addition!", 133.7], ["Find the Changing Number", 198.7], ["The Secret of Making Five", 255.6], ["Your Turn, Pattern Detective!", 319.3], ["Now You're Ready!", 403.6]]};
+const COLORS = { red: "#ef4444", blue: "#3b82f6", green: "#22c55e", yellow: "#facc15" };
+const v = document.getElementById("v"), quiz = document.getElementById("quiz"), voice = document.getElementById("voice");
+const Q = QUIZ.questions, MAX = Q.length * 4;
+let state, prevT = 0, active = null, autoTimer = null;
+
+function fresh() { state = Q.map(() => ({ tries: 0, points: 0, done: false, skipped: false })); }
+function total() { return state.reduce((a, s) => a + s.points, 0); }
+function fmt(s) { s = Math.floor(s); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+function say(name) { try { voice.src = "audio/" + name + ".mp3"; voice.currentTime = 0; voice.play().catch(() => {}); } catch (e) {} }
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function swatch(name) { const s = el("span", "swatch"); s.style.background = COLORS[name.toLowerCase()]; return s; }
+function plain(c) { return c.startsWith("c:") ? c.slice(2) : c; }
+
+// ---- score strip and score card ----
+function renderScore() {
+  document.getElementById("score").innerHTML = `${total()} <small>/ ${MAX} points</small>`;
+  const dots = document.getElementById("dots"); dots.textContent = "";
+  Q.forEach((q, i) => {
+    const s = state[i], d = el("span", "dot");
+    if (s.done) { d.classList.add("p" + s.points); d.textContent = s.points; d.title = `Question ${i + 1}: ${s.points} points`; }
+    else if (s.skipped) { d.classList.add("skip"); d.textContent = "–"; d.title = `Question ${i + 1}: skipped`; }
+    else { d.textContent = i + 1; d.title = `Question ${i + 1}`; if (active === i) d.classList.add("now"); }
+    dots.appendChild(d);
+  });
+  const rows = document.getElementById("rows"); rows.textContent = "";
+  Q.forEach((q, i) => {
+    const s = state[i], tr = el("tr");
+    tr.appendChild(el("td", "n", i + 1));
+    tr.appendChild(el("td", "", q.prompt));
+    tr.appendChild(el("td", "n", s.done ? String(s.tries) : s.skipped ? "skipped" : "–"));
+    tr.appendChild(el("td", "n", s.done ? `${s.points} / 4` : "–"));
+    rows.appendChild(tr);
+  });
+}
+
+// ---- question card ----
+function showQuestion(i) {
+  const q = Q[i], s = state[i];
+  active = i; clearTimeout(autoTimer);
+  if (document.fullscreenElement && document.fullscreenElement !== document.getElementById("stage")) document.exitFullscreen().catch(() => {});
+  quiz.textContent = "";
+  const card = el("div", "card"); card.setAttribute("role", "dialog"); card.setAttribute("aria-label", `Question ${i + 1}`);
+  const head = el("div", "qhead");
+  head.appendChild(el("span", "", `Question ${i + 1} of ${Q.length}`));
+  const worth = el("span", "worth"); head.appendChild(worth);
+  card.appendChild(head);
+  if (q.visual.length) {
+    const vis = el("div", "visual");
+    q.visual.forEach(x => vis.appendChild(x.startsWith("c:") ? swatch(x.slice(2)) : el("span", "vchip" + (x === "?" ? " q" : ""), x)));
+    card.appendChild(vis);
+  }
+  card.appendChild(el("h2", "prompt", q.prompt));
+  const opts = el("div", "opts");
+  const fb = el("p", "feedback"); fb.setAttribute("aria-live", "assertive");
+  const updateWorth = () => { worth.textContent = s.done ? `+${s.points} points` : `Worth ${Math.max(1, 4 - s.tries)} points`; };
+  q.choices.forEach((c, k) => {
+    const b = el("button", "opt"); b.type = "button";
+    if (c.startsWith("c:")) b.appendChild(swatch(c.slice(2)));
+    b.appendChild(el("span", "", plain(c)));
+    b.onclick = () => {
+      if (s.done || b.disabled) return;
+      s.tries++;
+      if (k === q.answer) {
+        s.done = true; s.points = Math.max(1, 5 - s.tries);
+        b.classList.add("right");
+        [...opts.children].forEach(o => o.disabled = true);
+        fb.className = "feedback good";
+        fb.textContent = s.points === 4 ? `Right on the first try! +4 points` : `That's it! +${s.points} points`;
+        say("right" + (1 + (i % 4)));
+        updateWorth(); renderScore(); cont.hidden = false; cont.focus();
+        autoTimer = setTimeout(resume, 3200);
+      } else {
+        b.classList.add("wrong", "shake"); b.disabled = true;
+        fb.className = "feedback bad";
+        fb.textContent = `Not quite. Try again! Now worth ${Math.max(1, 4 - s.tries)} points.`;
+        say(s.tries % 2 ? "wrong1" : "wrong2");
+        updateWorth();
+      }
+    };
+    opts.appendChild(b);
+  });
+  card.appendChild(opts);
+  card.appendChild(fb);
+  const foot = el("div", "qfoot");
+  const again = el("button", "btn", "Hear it again"); again.type = "button"; again.onclick = () => say(q.id);
+  const cont = el("button", "btn primary", "Keep watching"); cont.type = "button"; cont.hidden = true; cont.onclick = resume;
+  foot.appendChild(again); foot.appendChild(cont);
+  card.appendChild(foot);
+  quiz.appendChild(card);
+  quiz.hidden = false;
+  updateWorth(); renderScore();
+  say(q.id);
+  opts.firstChild.focus({ preventScroll: true });
+}
+function resume() {
+  clearTimeout(autoTimer);
+  if (active == null) return;
+  const q = Q[active];
+  active = null; quiz.hidden = true; voice.pause();
+  v.currentTime = q.resume; prevT = q.resume;
+  renderScore();
+  v.play().catch(() => {});
+}
+
+// ---- final card ----
+function showFinal() {
+  active = null; clearTimeout(autoTimer);
+  Q.forEach((q, i) => { if (!state[i].done) state[i].skipped = true; });
+  renderScore();
+  const pts = total(), pct = pts / MAX, stars = pct >= 0.9 ? 3 : pct >= 0.7 ? 2 : 1;
+  try { LessonApp.quiz(pts, MAX, state.filter(s => s.points === 4).length); } catch (e) {}
+  quiz.textContent = "";
+  const card = el("div", "card final"); card.setAttribute("role", "dialog"); card.setAttribute("aria-label", "Final score");
+  card.appendChild(el("div", "qhead", "Lesson complete"));
+  const big = el("div", "big"); big.innerHTML = `${pts} <small>/ ${MAX}</small>`; card.appendChild(big);
+  const st = el("div", "stars");
+  for (let k = 0; k < 3; k++) st.innerHTML += `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="${k < stars ? "var(--gold)" : "var(--line)"}" d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>`;
+  card.appendChild(st);
+  const msg = pct >= 0.9 ? "Amazing, pattern detective! You know both kinds of patterns."
+            : pct >= 0.7 ? "Great work! You found most of the patterns."
+            : "Good effort! Watch it again to find even more patterns.";
+  card.appendChild(el("h2", "prompt", msg));
+  const firsts = state.filter(s => s.points === 4).length;
+  card.appendChild(el("p", "feedback", `${firsts} of ${Q.length} right on the first try`));
+  const foot = el("div", "qfoot");
+  const again = el("button", "btn primary", "Watch again"); again.type = "button"; again.onclick = restart;
+  foot.appendChild(again); card.appendChild(foot);
+  quiz.appendChild(card); quiz.hidden = false;
+  say("done");
+  let best = null;
+  try { best = parseInt(localStorage.getItem("patterns-best") || "", 10); if (!(best >= pts)) localStorage.setItem("patterns-best", String(pts)); } catch (e) {}
+  document.getElementById("best").textContent = `Finished with ${pts} of ${MAX} points.` + (best >= 0 && !isNaN(best) ? ` Best so far on this device: ${Math.max(best, pts)}.` : "");
+}
+function restart() {
+  fresh(); active = null; clearTimeout(autoTimer); quiz.hidden = true; voice.pause();
+  v.currentTime = 0; prevT = 0; renderScore();
+  document.getElementById("best").textContent = "Answers are scored as he goes.";
+  v.play().catch(() => {});
+}
+
+// ---- watch playback and stop at each question ----
+function tick() {
+  if (!v.paused && active == null) {
+    const t = v.currentTime;
+    if (t - prevT < 1.5) {
+      for (let i = 0; i < Q.length; i++) {
+        const s = state[i];
+        if (!s.done && prevT < Q[i].t && Q[i].t <= t + 0.04) { v.pause(); v.currentTime = Q[i].t; showQuestion(i); break; }
+      }
+    }
+    prevT = t;
+  }
+  requestAnimationFrame(tick);
+}
+v.addEventListener("seeked", () => { if (active == null) prevT = v.currentTime; });
+v.addEventListener("play", () => { if (active != null) { v.pause(); } });
+v.addEventListener("ended", showFinal);
+
+// ---- chapters, full screen, restart ----
+const ch = document.getElementById("ch");
+QUIZ.chapters.forEach(([name, t], i) => {
+  const b = el("button"); b.type = "button"; b.id = "chapter-" + (i + 1);
+  b.appendChild(el("span", "t", fmt(t))); b.appendChild(el("span", "", name));
+  b.onclick = () => { if (active != null) return; quiz.hidden = true; v.currentTime = t; prevT = t; v.play().catch(() => {}); };
+  ch.appendChild(b);
+});
+v.addEventListener("timeupdate", () => {
+  const t = v.currentTime;
+  [...ch.children].forEach((b, i) => {
+    const end = i + 1 < QUIZ.chapters.length ? QUIZ.chapters[i + 1][1] : 1e9;
+    b.classList.toggle("on", t >= QUIZ.chapters[i][1] && t < end);
+  });
+});
+document.getElementById("fs").onclick = () => {
+  const s = document.getElementById("stage");
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  else if (s.requestFullscreen) s.requestFullscreen().catch(() => {});
+};
+document.getElementById("restart").onclick = restart;
+
+fresh(); renderScore(); requestAnimationFrame(tick);
+</script>
+
+<link rel="stylesheet" href="../app.css">
+<link rel="stylesheet" href="../pip.css">
+<script src="../pip.js"></script>
+</body></html>

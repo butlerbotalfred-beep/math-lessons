@@ -1,0 +1,218 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="apple-touch-icon" href="icon.png"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Math Lessons</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a workbook shelf. "Up next" card on top, then one big tappable card per workbook page, then a folded parents' corner. */
+:root {
+  --bg: #f5f3ff; --surface: #ffffff; --ink: #1e1b4b; --muted: #5b5785; --accent: #7c5cff; --chip: #ede9fe; --line: #ddd6fe;
+  --good: #16a34a; --good-soft: #dcfce7; --gold: #f59e0b; --on-accent: #ffffff;
+  --t45: #8b5cf6; --t46: #0ea5e9; --t47: #f97316; --t48: #10b981; --t49: #ec4899;
+  --display: "Fredoka", "Trebuchet MS", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #13112a; --surface: #1e1b3a; --ink: #f5f3ff; --muted: #b4aedb; --accent: #a78bfa; --chip: #2a2550; --line: #3b3570;
+  --good: #4ade80; --good-soft: #14361f; --gold: #fbbf24; --on-accent: #13112a;
+  --t45: #a78bfa; --t46: #38bdf8; --t47: #fb923c; --t48: #34d399; --t49: #f472b6; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #13112a; --surface: #1e1b3a; --ink: #f5f3ff; --muted: #b4aedb; --accent: #a78bfa; --chip: #2a2550; --line: #3b3570;
+  --good: #4ade80; --good-soft: #14361f; --gold: #fbbf24; --on-accent: #13112a;
+  --t45: #a78bfa; --t46: #38bdf8; --t47: #fb923c; --t48: #34d399; --t49: #f472b6; color-scheme: dark }
+html { -webkit-text-size-adjust: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--display); }
+a, button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; font-family: var(--display); }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.wrap { max-width: 1100px; margin: 0 auto; padding-block: 24px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 22px; }
+header { display: grid; gap: 4px; }
+h1 { margin: 0; font-size: clamp(32px, 5.5vw, 48px); font-weight: 700; text-wrap: balance; }
+.hello { margin: 0; color: var(--muted); font-size: 20px; }
+h2 { margin: 0; font-size: 22px; font-weight: 600; }
+
+/* Up next */
+.next { display: grid; grid-template-columns: auto 1fr; gap: 18px 22px; align-items: center; background: var(--surface);
+  border: 2px solid var(--accent); border-radius: 26px; padding: 18px; color: inherit; text-decoration: none; }
+.next .tile { width: 120px; height: 120px; }
+.next .eyebrow { font-size: 15px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+.next .ttl { font-size: clamp(24px, 3.6vw, 32px); font-weight: 700; margin: 2px 0 12px; text-wrap: balance; }
+.go { display: inline-flex; align-items: center; gap: 10px; min-height: 64px; padding: 0 28px; border-radius: 18px;
+  background: var(--accent); color: var(--on-accent); font-size: 24px; font-weight: 700; }
+.go svg { width: 26px; height: 26px; fill: currentColor; }
+.alldone { font-size: 22px; color: var(--good); font-weight: 600; margin: 0; }
+
+/* Lesson cards */
+.shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.card { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: start; min-height: 150px; padding: 16px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 22px; color: inherit; text-decoration: none;
+  transition: transform 0.12s; }
+.card:active { transform: scale(0.98); }
+.card.soon { opacity: 0.6; }
+.tile { width: 92px; height: 92px; border-radius: 20px; display: grid; place-items: center; position: relative; color: #fff; }
+.tile svg { width: 64%; height: 64%; }
+.tile .pg { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); background: var(--surface); color: var(--ink);
+  border: 2px solid currentColor; border-radius: 999px; padding: 1px 10px; font-size: 15px; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.info { display: grid; gap: 8px; min-width: 0; }
+.ctitle { font-size: 21px; font-weight: 600; line-height: 1.2; text-wrap: balance; }
+.steps { display: flex; flex-wrap: wrap; gap: 6px; }
+.step { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 2px 12px; border-radius: 999px;
+  background: var(--chip); color: var(--muted); font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.step.done { background: var(--good-soft); color: var(--good); font-weight: 600; }
+.step svg { width: 18px; height: 18px; flex: none; }
+.stars { display: inline-flex; gap: 1px; }
+.stars svg { width: 18px; height: 18px; }
+
+/* Parents' corner */
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 6px 18px; }
+summary { min-height: 56px; display: flex; align-items: center; font-size: 20px; font-weight: 600; cursor: pointer; }
+.pc { display: grid; gap: 12px; padding-bottom: 14px; }
+.pc p { margin: 0; color: var(--muted); font-size: 16px; line-height: 1.5; max-width: 70ch; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 16px; }
+th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
+td.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.reset { justify-self: start; min-height: 52px; padding: 0 20px; border-radius: 14px; border: 1px solid var(--line);
+  background: var(--chip); color: var(--ink); font-size: 17px; font-weight: 600; cursor: pointer; }
+.reset.armed { background: #dc2626; border-color: #dc2626; color: #fff; }
+
+@media (max-width: 520px) {
+  .next { grid-template-columns: 1fr; justify-items: start; }
+  .next .tile { width: 92px; height: 92px; }
+}
+@media (prefers-reduced-motion: reduce) { .card { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Math Lessons</h1>
+    <p class="hello" id="hello">Watch the video, answer the questions, then do the page on screen.</p>
+  </header>
+
+  <a class="next" id="next" href="p45/index.html">
+    <span class="tile" id="next-tile"></span>
+    <span>
+      <span class="eyebrow">Up next</span>
+      <span class="ttl" id="next-title" style="display:block">Patterns Don't Always Repeat!</span>
+      <span class="go" id="next-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l14 8-14 8z"/></svg><span id="next-label">Start</span></span>
+    </span>
+  </a>
+
+  <section style="display:grid;gap:12px" aria-labelledby="all-title">
+    <h2 id="all-title">All lessons</h2>
+    <div class="shelf" id="shelf"></div>
+  </section>
+
+  <details id="parents">
+    <summary>For grown-ups: scores</summary>
+    <div class="pc">
+      <p>Scores are saved on this iPad only, in Safari. Pip, the owl button, answers spoken questions using Claude. Video points are 4 for a first-try answer, then 3, 2 and 1. "Best" is the best full run through the video.</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Page</th><th>Lesson</th><th>Best video score</th><th>Last</th><th>Times watched</th><th>Worksheet</th><th>Last opened</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table></div>
+      <button class="reset" id="reset" type="button">Clear all scores on this iPad</button>
+    </div>
+  </details>
+</div>
+
+<script>
+// Each lesson page saves its results under "mathapp:<page>" (see app.js).
+const LESSONS = [
+  { id: "p45", page: 45, title: "Patterns Don't Always Repeat!", q: 12, sheet: false, color: "--t45",
+    icon: '<circle cx="8" cy="30" r="7"/><rect x="18" y="23" width="14" height="14" rx="2"/><circle cx="42" cy="30" r="7"/><rect x="52" y="23" width="14" height="14" rx="2" opacity="0.5"/>' },
+  { id: "p46", page: 46, title: "Make a Graph!", q: 11, sheet: true, color: "--t46",
+    icon: '<rect x="4" y="34" width="12" height="22" rx="2"/><rect x="22" y="14" width="12" height="42" rx="2"/><rect x="40" y="26" width="12" height="30" rx="2"/>' },
+  { id: "p47", page: 47, title: "Review Day: Sums of 5", q: 10, sheet: true, color: "--t47",
+    icon: '<text x="32" y="50" text-anchor="middle" font-size="52" font-weight="700" font-family="Fredoka, system-ui, sans-serif">5</text>' },
+  { id: "p48", page: 48, title: "Domino Facts and Turnarounds", q: 10, sheet: true, color: "--t48",
+    icon: '<rect x="18" y="2" width="28" height="56" rx="6" fill="none" stroke="currentColor" stroke-width="4"/><line x1="22" y1="30" x2="42" y2="30" stroke="currentColor" stroke-width="4"/><circle cx="26" cy="11" r="3.5"/><circle cx="38" cy="21" r="3.5"/><circle cx="32" cy="44" r="3.5"/>' },
+  { id: "p49", page: 49, title: "Draw Circles to Show Addition!", q: 9, sheet: true, color: "--t49",
+    icon: '<rect x="2" y="12" width="60" height="36" rx="6" fill="none" stroke="currentColor" stroke-width="4"/><line x1="32" y1="12" x2="32" y2="48" stroke="currentColor" stroke-width="4"/><circle cx="17" cy="30" r="7"/><circle cx="41" cy="23" r="5.5"/><circle cx="53" cy="37" r="5.5"/>' },
+];
+function rec(id) { try { return JSON.parse(localStorage.getItem("mathapp:" + id) || "{}") || {}; } catch (e) { return {}; } }
+function starCount(best, max) { const p = best / max; return p >= 0.9 ? 3 : p >= 0.7 ? 2 : 1; }
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+const STAR = f => `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="${f}" d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>`;
+const CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 4l14 8-14 8z"/></svg>';
+const PENCIL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" d="M4 20l1-5L15.5 4.5l4 4L9 19z"/></svg>';
+
+function tile(L, big) {
+  const t = el("span", "tile"); t.style.background = `var(${L.color})`;
+  t.innerHTML = `<svg viewBox="0 0 64 60" fill="currentColor" aria-hidden="true">${L.icon}</svg>`;
+  const pg = el("span", "pg", "Page " + L.page); pg.style.color = `var(${L.color})`; t.appendChild(pg);
+  return t;
+}
+function videoDone(r) { return r.best != null; }
+function finished(L, r) { return videoDone(r) && (!L.sheet || r.sheetDone); }
+
+function render() {
+  const shelf = document.getElementById("shelf"); shelf.textContent = "";
+  const rows = document.getElementById("rows"); rows.textContent = "";
+  let nextL = null;
+  LESSONS.forEach(L => {
+    const r = rec(L.id), max = L.q * 4;
+    if (!nextL && !finished(L, r)) nextL = L;
+    const a = el("a", "card"); a.href = L.id + "/index.html"; a.id = "lesson-" + L.id;
+    a.appendChild(tile(L));
+    const info = el("span", "info");
+    info.appendChild(el("span", "ctitle", L.title));
+    const steps = el("span", "steps");
+    const v = el("span", "step" + (videoDone(r) ? " done" : ""));
+    if (videoDone(r)) {
+      const n = starCount(r.best, max);
+      v.innerHTML = `<span class="stars" aria-label="${n} of 3 stars">${[0, 1, 2].map(k => STAR(k < n ? "var(--gold)" : "var(--line)")).join("")}</span>${r.best} / ${max}`;
+    } else v.innerHTML = `${PLAY}Video, ${L.q} questions`;
+    steps.appendChild(v);
+    if (L.sheet) {
+      const w = el("span", "step" + (r.sheetDone ? " done" : ""));
+      w.innerHTML = r.sheetDone ? `${CHECK}Page ${L.page} done` : r.sheetTotal ? `${PENCIL}${r.sheetBest} of ${r.sheetTotal} right` : `${PENCIL}Page ${L.page} on screen`;
+      steps.appendChild(w);
+    }
+    info.appendChild(steps);
+    a.appendChild(info);
+    shelf.appendChild(a);
+
+    const tr = el("tr");
+    tr.appendChild(el("td", "n", L.page));
+    tr.appendChild(el("td", "", L.title));
+    tr.appendChild(el("td", "n", videoDone(r) ? `${r.best} / ${max}` + (r.bestFirsts != null ? ` (${r.bestFirsts} first try)` : "") : "not finished"));
+    tr.appendChild(el("td", "n", r.last != null ? `${r.last} / ${max}` : "–"));
+    tr.appendChild(el("td", "n", String(r.plays || 0)));
+    tr.appendChild(el("td", "n", !L.sheet ? "none" : r.sheetDone ? "all right" : r.sheetTotal ? `${r.sheetBest} of ${r.sheetTotal}` : "not checked"));
+    tr.appendChild(el("td", "n", r.updated ? new Date(r.updated).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) : "–"));
+    rows.appendChild(tr);
+  });
+
+  const next = document.getElementById("next");
+  if (nextL) {
+    const r = rec(nextL.id);
+    next.href = nextL.id + "/index.html";
+    const t = document.getElementById("next-tile"); t.replaceWith(Object.assign(tile(nextL), { id: "next-tile" }));
+    document.getElementById("next-title").textContent = nextL.title;
+    document.getElementById("next-label").textContent = videoDone(r) ? `Finish page ${nextL.page}` : r.opened ? "Keep going" : "Start";
+    next.hidden = false;
+  } else {
+    next.hidden = true;
+    document.getElementById("hello").textContent = "Every lesson is done. Great work! Tap any lesson to play it again.";
+  }
+}
+render();
+// coming back from a lesson (including the browser's back button) shows fresh scores
+addEventListener("pageshow", render);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });
+
+let armed = null;
+document.getElementById("reset").onclick = e => {
+  const b = e.currentTarget;
+  if (!armed) { b.classList.add("armed"); b.textContent = "Tap again to clear every score"; armed = setTimeout(() => { b.classList.remove("armed"); b.textContent = "Clear all scores on this iPad"; armed = null; }, 4000); return; }
+  clearTimeout(armed); armed = null; b.classList.remove("armed"); b.textContent = "Scores cleared";
+  try { Object.keys(localStorage).filter(k => k.startsWith("mathapp:")).forEach(k => localStorage.removeItem(k)); } catch (err) {}
+  render();
+};
+</script>
+
+<link rel="stylesheet" href="pip.css">
+<script src="pip.js"></script>
+</body></html>

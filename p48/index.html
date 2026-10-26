@@ -1,0 +1,481 @@
+<!doctype html><html><head><meta charset=utf8><link rel="apple-touch-icon" href="../icon.png"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<script src="../app.js"></script>
+<title>Domino Facts and Turnarounds</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one centred column. Score strip, then the video stage (quiz cards pop up over it), chapters, and a live score card. */
+:root {
+  --bg: #f5f3ff; --surface: #ffffff; --ink: #1e1b4b; --muted: #5b5785; --accent: #7c5cff; --chip: #ede9fe; --line: #ddd6fe;
+  --good: #16a34a; --good-soft: #dcfce7; --bad: #dc2626; --bad-soft: #fee2e2; --gold: #f59e0b; --scrim: rgba(30, 27, 75, 0.55);
+  --display: "Fredoka", "Trebuchet MS", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #13112a; --surface: #1e1b3a; --ink: #f5f3ff; --muted: #b4aedb; --accent: #a78bfa; --chip: #2a2550; --line: #3b3570;
+  --good: #4ade80; --good-soft: #14361f; --bad: #f87171; --bad-soft: #3f1a1a; --gold: #fbbf24; --scrim: rgba(8, 6, 24, 0.66); color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #13112a; --surface: #1e1b3a; --ink: #f5f3ff; --muted: #b4aedb; --accent: #a78bfa; --chip: #2a2550; --line: #3b3570;
+  --good: #4ade80; --good-soft: #14361f; --bad: #f87171; --bad-soft: #3f1a1a; --gold: #fbbf24; --scrim: rgba(8, 6, 24, 0.66); color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--display); }
+.wrap { max-width: 1100px; margin: 0 auto; padding-block: 20px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 14px; }
+h1 { margin: 0; font-size: clamp(26px, 4.5vw, 40px); font-weight: 700; text-wrap: balance; }
+.sub { margin: 0; color: var(--muted); font-size: 17px; line-height: 1.5; max-width: 65ch; }
+button { font-family: var(--display); }
+button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.scorebar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 16px; padding: 10px 14px; }
+.score { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.score small { font-size: 15px; color: var(--muted); font-weight: 500; }
+.dots { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; min-width: 0; }
+.dot { width: 30px; height: 30px; border-radius: 50%; border: 2px dashed var(--line); display: grid; place-items: center;
+  font-size: 14px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.dot.p4 { background: var(--good); border: 0; color: #fff; }
+.dot.p3, .dot.p2 { background: var(--gold); border: 0; color: #fff; }
+.dot.p1 { background: var(--accent); border: 0; color: #fff; }
+.dot.skip { border-style: solid; }
+.dot.now { border-style: solid; border-color: var(--accent); color: var(--accent); }
+.tools { display: flex; gap: 8px; }
+.btn { font-size: 15px; font-weight: 600; color: var(--ink); background: var(--chip); border: 1px solid var(--line); border-radius: 12px;
+  padding: 8px 14px; cursor: pointer; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.stage { position: relative; container-type: inline-size; container-name: stage; border-radius: 18px; overflow: hidden; background: #000;
+  box-shadow: 0 12px 40px rgba(30, 27, 75, 0.25); }
+video { width: 100%; max-width: 100%; aspect-ratio: 16 / 9; display: block; background: #000; }
+.quiz { position: absolute; inset: 0; display: grid; place-items: center; padding: 3cqw; background: var(--scrim); }
+.card { width: min(100%, 780px); max-height: 100%; overflow: auto; background: var(--surface); color: var(--ink); border-radius: 22px;
+  padding: clamp(14px, 2.4cqw, 26px); display: grid; gap: clamp(8px, 1.4cqw, 14px); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35); }
+.qhead { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 15px; color: var(--muted); font-weight: 600; }
+.worth { background: var(--chip); color: var(--accent); border-radius: 999px; padding: 4px 12px; font-weight: 700; }
+.visual { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.vchip { min-width: 46px; height: 46px; padding: 0 10px; border-radius: 12px; background: var(--chip); border: 1px solid var(--line);
+  display: grid; place-items: center; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.vchip.q { color: var(--accent); border: 2px dashed var(--accent); background: transparent; }
+.swatch { width: 46px; height: 46px; border-radius: 12px; box-shadow: inset 0 -6px 0 rgba(0, 0, 0, 0.18); }
+.prompt { margin: 0; font-size: clamp(22px, 3.2cqw, 32px); font-weight: 700; text-align: center; text-wrap: balance; }
+.opts { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(8px, 1.2cqw, 12px); }
+.opt { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 64px; padding: 10px 14px; border-radius: 16px;
+  border: 2px solid var(--line); background: var(--surface); color: var(--ink); font-size: clamp(18px, 2.4cqw, 24px); font-weight: 600;
+  cursor: pointer; text-align: center; line-height: 1.2; transition: transform 0.12s; }
+.opt:hover:not(:disabled) { border-color: var(--accent); transform: translateY(-2px); }
+.opt .swatch { width: 34px; height: 34px; border-radius: 9px; flex: none; }
+.opt.wrong { border-color: var(--bad); background: var(--bad-soft); color: var(--muted); text-decoration: line-through; cursor: default; }
+.opt.right { border-color: var(--good); background: var(--good-soft); color: var(--ink); }
+.opt.shake { animation: shake 0.4s; }
+@keyframes shake { 20% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(5px); } }
+.feedback { min-height: 1.4em; text-align: center; font-size: clamp(18px, 2.4cqw, 22px); font-weight: 700; margin: 0; }
+.feedback.good { color: var(--good); }
+.feedback.bad { color: var(--bad); }
+.qfoot { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.final { text-align: center; justify-items: center; }
+.big { font-size: clamp(44px, 8cqw, 76px); font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.big small { font-size: 0.45em; color: var(--muted); }
+.stars { display: flex; gap: 6px; }
+.stars svg { width: clamp(34px, 5cqw, 52px); height: clamp(34px, 5cqw, 52px); }
+.dchip { display: inline-grid; place-items: center; }
+svg.dom rect { fill: #fbf8ef; stroke: #b8ab8c; stroke-width: 2.5; }
+svg.dom line { stroke: #9a8f78; stroke-width: 2.5; }
+svg.dom circle { fill: #1f2937; }
+svg.ws rect { fill: #7fb3dd; stroke: #4f86b5; stroke-width: 2.5; }
+svg.ws line { stroke: #4f86b5; stroke-width: 2.5; }
+svg.ws circle { fill: #fff; }
+/* on-screen worksheet */
+.ws h3 { margin: 10px 0 2px; font-size: 19px; font-weight: 600; }
+.wsbar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.wsbar .prog { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.domrow { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 12px; }
+.addgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.prob { border: 2px solid var(--line); border-radius: 16px; padding: 10px; display: grid; justify-items: center; gap: 6px; position: relative; background: var(--surface); }
+.prob.ok { border-color: var(--good); background: var(--good-soft); }
+.prob.bad { border-color: var(--bad); }
+.prob .tag { font-size: 13px; font-weight: 600; color: var(--muted); min-height: 1.2em; text-align: center; }
+.prob.ok .tag { color: var(--good); }
+.prob.bad .tag { color: var(--bad); }
+.pair { display: flex; gap: 22px; justify-content: center; }
+.vf { display: grid; grid-template-columns: 26px 54px; align-items: center; justify-items: center; row-gap: 4px; font-size: 30px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.vf .rule { grid-column: 1 / 3; width: 100%; height: 3px; background: var(--ink); border-radius: 2px; }
+.vf .num { height: 46px; display: grid; place-items: center; }
+.vf input { width: 50px; height: 46px; box-sizing: border-box; text-align: center; font: 600 28px var(--display); color: var(--ink); background: var(--chip);
+  border: 2px dashed var(--accent); border-radius: 10px; padding: 0; }
+.vf input:focus { outline: 3px solid var(--accent); outline-offset: 1px; border-style: solid; }
+.vf input.wrong { border: 2px solid var(--bad); background: var(--bad-soft); }
+.vf input.right { border: 2px solid var(--good); background: transparent; }
+.vf input[readonly] { border: 0; background: transparent; color: var(--muted); }
+.wsdone { font-size: 20px; font-weight: 700; color: var(--good); margin: 0; }
+@container stage (max-width: 640px) {
+  .quiz { position: static; background: var(--surface); padding: 12px; }
+  .card { box-shadow: none; padding: 4px; }
+  .opts { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { .opt.shake { animation: none; } .opt { transition: none; } }
+
+.chapters { display: flex; flex-wrap: wrap; gap: 8px; }
+.chapters button { font-size: 15px; font-weight: 500; color: var(--ink); background: var(--chip); border: 1px solid var(--line);
+  border-radius: 999px; padding: 8px 14px; cursor: pointer; display: flex; gap: 8px; align-items: baseline; }
+.chapters button .t { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 13px; }
+.chapters button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.chapters button.on .t { color: #fff; }
+.sheet { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; display: grid; gap: 8px; }
+.sheet h2 { margin: 0; font-size: 20px; }
+.sheet p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.5; max-width: 70ch; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; }
+td.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
+</style>
+
+<div class="wrap">
+  <h1>Domino Facts and Turnarounds</h1>
+  <p class="sub">A lesson for page 48, Review. The video stops for 10 questions. Getting it right on the first try is worth 4 points, then 3, 2 and 1. When the video is done, fill in page 48 right here on screen.</p>
+
+  <div class="scorebar" aria-live="polite">
+    <div class="score" id="score">0 <small>/ 40 points</small></div>
+    <div class="dots" id="dots" aria-label="Questions"></div>
+    <div class="tools">
+      <button class="btn" id="fs" type="button">Full screen</button>
+      <button class="btn" id="restart" type="button">Start over</button>
+    </div>
+  </div>
+
+  <div class="stage" id="stage">
+    <video id="v" src="lesson.mp4" controls playsinline preload="auto" controlslist="nofullscreen nodownload" disablepictureinpicture></video>
+    <div class="quiz" id="quiz" hidden></div>
+  </div>
+
+  <div class="chapters" id="ch" aria-label="Chapters"></div>
+
+  <section class="sheet">
+    <h2>Score card</h2>
+    <p id="best">Press play to start. Answers are scored as he goes.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>#</th><th>Question</th><th>Tries</th><th>Points</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table></div>
+  </section>
+
+  <section class="sheet ws" id="ws" aria-label="Page 48 on screen">
+    <h2>Page 48 on screen</h2>
+    <p>Type each answer in the dashed boxes. A problem checks itself as soon as all of its boxes are filled in. The first problem in each part is done for you, just like the printed page.</p>
+    <div class="wsbar"><span class="prog" id="wsprog"></span>
+      <button class="btn" id="wsclear" type="button">Clear page 48</button></div>
+    <h3>Write the number facts.</h3>
+    <div class="domrow" id="domrow"></div>
+    <h3>Add. Write the related addition fact.</h3>
+    <div class="addgrid" id="addgrid"></div>
+    <p class="wsdone" id="wsdone" hidden></p>
+  </section>
+</div>
+<audio id="voice" preload="auto"></audio>
+
+<script>
+const QUIZ = {"questions": [{"id": "q1", "prompt": "Which number fact does this domino show?", "choices": ["5 + 2 = 7", "5 + 3 = 8", "2 + 2 = 4", "6 + 2 = 8"], "answer": 0, "visual": ["d:5/2"], "t": 52.74, "resume": 55.29}, {"id": "q2", "prompt": "Which two facts are turnarounds?", "choices": ["2 + 3 and 3 + 2", "2 + 3 and 2 + 4", "3 + 3 and 3 + 4", "2 + 2 and 3 + 3"], "answer": 0, "visual": [], "t": 103.96, "resume": 103.96}, {"id": "q3", "prompt": "1 + 6 = 7. So what is 6 + 1?", "choices": ["6", "5", "7", "8"], "answer": 2, "visual": ["1 + 6 = 7", "6 + 1 = ?"], "t": 122.58, "resume": 122.58}, {"id": "q4", "prompt": "Which fact is the turnaround of 2 + 5?", "choices": ["3 + 4", "5 + 2", "6 + 1", "2 + 5"], "answer": 1, "visual": ["d:1/6", "d:2/5", "d:3/4", "d:4/3", "d:5/2", "d:6/1"], "t": 170.42, "resume": 172.97}, {"id": "q5", "prompt": "Which domino does NOT make 7?", "choices": ["d:4/3", "d:2/5", "d:4/4", "d:6/1"], "answer": 2, "visual": [], "t": 182.04, "resume": 182.04}, {"id": "q6", "prompt": "Challenge 1: Which number fact does this domino show?", "choices": ["2 + 5 = 7", "2 + 6 = 8", "6 + 3 = 9", "3 + 6 = 9"], "answer": 1, "visual": ["d:2/6"], "t": 196.01, "resume": 200.56}, {"id": "q7", "prompt": "Challenge 2: What is the turnaround fact?", "choices": ["3 + 5 = 9", "5 + 5 = 10", "5 + 3 = 8", "8 + 3 = 11"], "answer": 2, "visual": ["3 + 5 = 8"], "t": 211.03, "resume": 215.58}, {"id": "q8", "prompt": "Challenge 3: What is 4 + 0?", "choices": ["0", "4", "5", "3"], "answer": 1, "visual": ["0 + 4 = 4", "4 + 0 = ?"], "t": 226.99, "resume": 231.54}, {"id": "q9", "prompt": "Why do turnaround facts have the same answer?", "choices": ["We added one more", "Same things, just in a different order", "The bigger number goes first", "Because of the zero"], "answer": 1, "visual": ["3 + 4", "4 + 3"], "t": 237.37, "resume": 237.37}, {"id": "q10", "prompt": "On page 48, after 2 + 3 = 5, what do you write next to it?", "choices": ["3 + 2 = 5", "2 + 3 = 6", "5 + 5 = 10", "3 + 3 = 6"], "answer": 0, "visual": ["2 + 3 = 5"], "t": 299.97, "resume": 299.97}], "total": 310.635, "chapters": [["Every Domino Is a Number Fact", 0.0], ["Flip It! Turnaround Facts", 61.9], ["Dominoes That Make Seven", 124.1], ["Your Turn, Math Friend!", 183.6], ["Ready for Page Forty-Eight", 238.9]]};
+const COLORS = { red: "#ef4444", blue: "#3b82f6", green: "#22c55e", yellow: "#facc15" };
+const v = document.getElementById("v"), quiz = document.getElementById("quiz"), voice = document.getElementById("voice");
+const Q = QUIZ.questions, MAX = Q.length * 4;
+let state, prevT = 0, active = null, autoTimer = null;
+
+function fresh() { state = Q.map(() => ({ tries: 0, points: 0, done: false, skipped: false })); }
+function total() { return state.reduce((a, s) => a + s.points, 0); }
+function fmt(s) { s = Math.floor(s); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+function say(name) { try { voice.src = "audio/" + name + ".mp3"; voice.currentTime = 0; voice.play().catch(() => {}); } catch (e) {} }
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function swatch(name) { const s = el("span", "swatch"); s.style.background = COLORS[name.toLowerCase()]; return s; }
+// Domino drawn as SVG: "d:2/3" = 2 dots on top, 3 on the bottom.
+const PIPS = { 0: [], 1: [[0, 0]], 2: [[-1, -1], [1, 1]], 3: [[-1, -1], [0, 0], [1, 1]], 4: [[-1, -1], [1, -1], [-1, 1], [1, 1]],
+  5: [[-1, -1], [1, -1], [0, 0], [-1, 1], [1, 1]], 6: [[-1, -1], [-1, 0], [-1, 1], [1, -1], [1, 0], [1, 1]] };
+function domSvg(top, bot, h, cls) {
+  const dots = (n, cy) => PIPS[n].map(([x, y]) => `<circle cx="${25 + x * 12}" cy="${cy + y * 12}" r="4.6"/>`).join("");
+  return `<svg class="${cls}" viewBox="0 0 50 100" height="${h}" width="${h / 2}" aria-hidden="true"><rect x="1.5" y="1.5" width="47" height="97" rx="7"/>` +
+    `<line x1="7" y1="50" x2="43" y2="50"/><g>${dots(top, 25.5)}${dots(bot, 74.5)}</g></svg>`;
+}
+function domEl(code, h) { const [a, b] = code.slice(2).split("/").map(Number); const s = el("span", "dchip"); s.innerHTML = domSvg(a, b, h, "dom"); return s; }
+function plain(c) { return c.startsWith("c:") ? c.slice(2) : c; }
+
+// ---- score strip and score card ----
+function renderScore() {
+  document.getElementById("score").innerHTML = `${total()} <small>/ ${MAX} points</small>`;
+  const dots = document.getElementById("dots"); dots.textContent = "";
+  Q.forEach((q, i) => {
+    const s = state[i], d = el("span", "dot");
+    if (s.done) { d.classList.add("p" + s.points); d.textContent = s.points; d.title = `Question ${i + 1}: ${s.points} points`; }
+    else if (s.skipped) { d.classList.add("skip"); d.textContent = "–"; d.title = `Question ${i + 1}: skipped`; }
+    else { d.textContent = i + 1; d.title = `Question ${i + 1}`; if (active === i) d.classList.add("now"); }
+    dots.appendChild(d);
+  });
+  const rows = document.getElementById("rows"); rows.textContent = "";
+  Q.forEach((q, i) => {
+    const s = state[i], tr = el("tr");
+    tr.appendChild(el("td", "n", i + 1));
+    tr.appendChild(el("td", "", q.prompt));
+    tr.appendChild(el("td", "n", s.done ? String(s.tries) : s.skipped ? "skipped" : "–"));
+    tr.appendChild(el("td", "n", s.done ? `${s.points} / 4` : "–"));
+    rows.appendChild(tr);
+  });
+}
+
+// ---- question card ----
+function showQuestion(i) {
+  const q = Q[i], s = state[i];
+  active = i; clearTimeout(autoTimer);
+  if (document.fullscreenElement && document.fullscreenElement !== document.getElementById("stage")) document.exitFullscreen().catch(() => {});
+  quiz.textContent = "";
+  const card = el("div", "card"); card.setAttribute("role", "dialog"); card.setAttribute("aria-label", `Question ${i + 1}`);
+  const head = el("div", "qhead");
+  head.appendChild(el("span", "", `Question ${i + 1} of ${Q.length}`));
+  const worth = el("span", "worth"); head.appendChild(worth);
+  card.appendChild(head);
+  if (q.visual.length) {
+    const vis = el("div", "visual");
+    q.visual.forEach(x => vis.appendChild(x.startsWith("d:") ? domEl(x, 64) : x.startsWith("c:") ? swatch(x.slice(2)) : el("span", "vchip" + (x === "?" ? " q" : ""), x)));
+    card.appendChild(vis);
+  }
+  card.appendChild(el("h2", "prompt", q.prompt));
+  const opts = el("div", "opts");
+  const fb = el("p", "feedback"); fb.setAttribute("aria-live", "assertive");
+  const updateWorth = () => { worth.textContent = s.done ? `+${s.points} points` : `Worth ${Math.max(1, 4 - s.tries)} points`; };
+  q.choices.forEach((c, k) => {
+    const b = el("button", "opt"); b.type = "button";
+    if (c.startsWith("d:")) { b.appendChild(domEl(c, 76)); b.setAttribute("aria-label", c.slice(2).replace("/", " and ") + " dots"); }
+    else { if (c.startsWith("c:")) b.appendChild(swatch(c.slice(2))); b.appendChild(el("span", "", plain(c))); }
+    b.onclick = () => {
+      if (s.done || b.disabled) return;
+      s.tries++;
+      if (k === q.answer) {
+        s.done = true; s.points = Math.max(1, 5 - s.tries);
+        b.classList.add("right");
+        [...opts.children].forEach(o => o.disabled = true);
+        fb.className = "feedback good";
+        fb.textContent = s.points === 4 ? `Right on the first try! +4 points` : `That's it! +${s.points} points`;
+        say("right" + (1 + (i % 4)));
+        updateWorth(); renderScore(); cont.hidden = false; cont.focus();
+        autoTimer = setTimeout(resume, 3200);
+      } else {
+        b.classList.add("wrong", "shake"); b.disabled = true;
+        fb.className = "feedback bad";
+        fb.textContent = `Not quite. Try again! Now worth ${Math.max(1, 4 - s.tries)} points.`;
+        say(s.tries % 2 ? "wrong1" : "wrong2");
+        updateWorth();
+      }
+    };
+    opts.appendChild(b);
+  });
+  card.appendChild(opts);
+  card.appendChild(fb);
+  const foot = el("div", "qfoot");
+  const again = el("button", "btn", "Hear it again"); again.type = "button"; again.onclick = () => say(q.id);
+  const cont = el("button", "btn primary", "Keep watching"); cont.type = "button"; cont.hidden = true; cont.onclick = resume;
+  foot.appendChild(again); foot.appendChild(cont);
+  card.appendChild(foot);
+  quiz.appendChild(card);
+  quiz.hidden = false;
+  updateWorth(); renderScore();
+  say(q.id);
+  opts.firstChild.focus({ preventScroll: true });
+}
+function resume() {
+  clearTimeout(autoTimer);
+  if (active == null) return;
+  const q = Q[active];
+  active = null; quiz.hidden = true; voice.pause();
+  v.currentTime = q.resume; prevT = q.resume;
+  renderScore();
+  v.play().catch(() => {});
+}
+
+// ---- final card ----
+function showFinal() {
+  active = null; clearTimeout(autoTimer);
+  Q.forEach((q, i) => { if (!state[i].done) state[i].skipped = true; });
+  renderScore();
+  const pts = total(), pct = pts / MAX, stars = pct >= 0.9 ? 3 : pct >= 0.7 ? 2 : 1;
+  try { LessonApp.quiz(pts, MAX, state.filter(s => s.points === 4).length); } catch (e) {}
+  quiz.textContent = "";
+  const card = el("div", "card final"); card.setAttribute("role", "dialog"); card.setAttribute("aria-label", "Final score");
+  card.appendChild(el("div", "qhead", "Lesson complete"));
+  const big = el("div", "big"); big.innerHTML = `${pts} <small>/ ${MAX}</small>`; card.appendChild(big);
+  const st = el("div", "stars");
+  for (let k = 0; k < 3; k++) st.innerHTML += `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="${k < stars ? "var(--gold)" : "var(--line)"}" d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>`;
+  card.appendChild(st);
+  const msg = pct >= 0.9 ? "Amazing, math friend! You know dominoes and turnaround facts."
+            : pct >= 0.7 ? "Great work! You got most of them."
+            : "Good effort! Watch it again and try for even more points.";
+  card.appendChild(el("h2", "prompt", msg));
+  const firsts = state.filter(s => s.points === 4).length;
+  card.appendChild(el("p", "feedback", `${firsts} of ${Q.length} right on the first try`));
+  const foot = el("div", "qfoot");
+  const again = el("button", "btn primary", "Watch again"); again.type = "button"; again.onclick = restart;
+  foot.appendChild(again); card.appendChild(foot);
+  quiz.appendChild(card); quiz.hidden = false;
+  say("done");
+  let best = null;
+  try { best = parseInt(localStorage.getItem("p48-best") || "", 10); if (!(best >= pts)) localStorage.setItem("p48-best", String(pts)); } catch (e) {}
+  document.getElementById("best").textContent = `Finished with ${pts} of ${MAX} points.` + (best >= 0 && !isNaN(best) ? ` Best so far on this device: ${Math.max(best, pts)}.` : "");
+}
+function restart() {
+  fresh(); active = null; clearTimeout(autoTimer); quiz.hidden = true; voice.pause();
+  v.currentTime = 0; prevT = 0; renderScore();
+  document.getElementById("best").textContent = "Answers are scored as he goes.";
+  v.play().catch(() => {});
+}
+
+// ---- watch playback and stop at each question ----
+function tick() {
+  if (!v.paused && active == null) {
+    const t = v.currentTime;
+    if (t - prevT < 1.5) {
+      for (let i = 0; i < Q.length; i++) {
+        const s = state[i];
+        if (!s.done && prevT < Q[i].t && Q[i].t <= t + 0.04) { v.pause(); v.currentTime = Q[i].t; showQuestion(i); break; }
+      }
+    }
+    prevT = t;
+  }
+  requestAnimationFrame(tick);
+}
+v.addEventListener("seeked", () => { if (active == null) prevT = v.currentTime; });
+v.addEventListener("play", () => { if (active != null) { v.pause(); } });
+v.addEventListener("ended", showFinal);
+
+// ---- chapters, full screen, restart ----
+const ch = document.getElementById("ch");
+QUIZ.chapters.forEach(([name, t], i) => {
+  const b = el("button"); b.type = "button"; b.id = "chapter-" + (i + 1);
+  b.appendChild(el("span", "t", fmt(t))); b.appendChild(el("span", "", name));
+  b.onclick = () => { if (active != null) return; quiz.hidden = true; v.currentTime = t; prevT = t; v.play().catch(() => {}); };
+  ch.appendChild(b);
+});
+v.addEventListener("timeupdate", () => {
+  const t = v.currentTime;
+  [...ch.children].forEach((b, i) => {
+    const end = i + 1 < QUIZ.chapters.length ? QUIZ.chapters[i + 1][1] : 1e9;
+    b.classList.toggle("on", t >= QUIZ.chapters[i][1] && t < end);
+  });
+});
+document.getElementById("fs").onclick = () => {
+  const s = document.getElementById("stage");
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  else if (s.requestFullscreen) s.requestFullscreen().catch(() => {});
+};
+document.getElementById("restart").onclick = restart;
+
+// ---- page 48 on screen ----
+const DOMS = [[0, 6], [1, 5], [2, 4], [3, 3], [4, 2], [5, 1], [6, 0]];
+const ADDS = [[2, 3], [1, 4], [2, 4], [1, 5], [1, 3], [2, 1], [4, 2], [4, 1], [3, 2], [1, 2], [3, 1], [5, 1]];
+const WS_KEY = "p48-worksheet";
+let wsSaved = {};
+try { wsSaved = JSON.parse(localStorage.getItem(WS_KEY) || "{}") || {}; } catch (e) {}
+const probs = [];
+function box(id, label) {
+  const i = document.createElement("input");
+  i.type = "text"; i.inputMode = "numeric"; i.maxLength = 2; i.autocomplete = "off"; i.id = id; i.setAttribute("aria-label", label);
+  i.value = wsSaved[id] || "";
+  return i;
+}
+function fixed(v, example) {
+  if (example) { const i = document.createElement("input"); i.readOnly = true; i.value = v; i.tabIndex = -1; return i; }
+  return el("span", "num", String(v));
+}
+// vertical fact: cells = [top, bottom, sum], each a node
+function vf(cells) {
+  const g = el("div", "vf");
+  g.appendChild(el("span")); g.appendChild(cells[0]);
+  g.appendChild(el("span", "", "+")); g.appendChild(cells[1]);
+  g.appendChild(el("span", "rule"));
+  g.appendChild(el("span")); g.appendChild(cells[2]);
+  return g;
+}
+const domrow = document.getElementById("domrow"), addgrid = document.getElementById("addgrid");
+DOMS.forEach(([a, b], i) => {
+  const p = el("div", "prob"); p.innerHTML = domSvg(a, b, 96, "ws");
+  const ex = i === 0, name = `Domino ${i + 1}`;
+  const cells = ex ? [fixed(a, 1), fixed(b, 1), fixed(a + b, 1)]
+    : [box(`d${i}a`, `${name}, top number`), box(`d${i}b`, `${name}, bottom number`), box(`d${i}s`, `${name}, answer`)];
+  p.appendChild(vf(cells));
+  const tag = el("div", "tag", ex ? "example" : ""); p.appendChild(tag);
+  domrow.appendChild(p);
+  if (!ex) probs.push({ el: p, tag, inputs: cells, want: [a, b, a + b], kind: "dom" });
+});
+ADDS.forEach(([a, b], i) => {
+  const p = el("div", "prob"), ex = i === 0, name = `Problem ${i + 1}`;
+  const left = [fixed(a), fixed(b), ex ? fixed(a + b, 1) : box(`a${i}s`, `${name}, ${a} plus ${b} equals`)];
+  const right = ex ? [fixed(b, 1), fixed(a, 1), fixed(a + b, 1)]
+    : [box(`a${i}ra`, `${name}, related fact, top number`), box(`a${i}rb`, `${name}, related fact, bottom number`), box(`a${i}rs`, `${name}, related fact, answer`)];
+  const pair = el("div", "pair"); pair.appendChild(vf(left)); pair.appendChild(vf(right)); p.appendChild(pair);
+  const tag = el("div", "tag", ex ? "example" : ""); p.appendChild(tag);
+  addgrid.appendChild(p);
+  if (!ex) probs.push({ el: p, tag, inputs: [left[2], ...right], want: [a + b, b, a, a + b], kind: "add", a, b });
+});
+function checkProb(pr, speak) {
+  const vals = pr.inputs.map(i => i.value.trim());
+  pr.inputs.forEach(i => i.classList.remove("wrong", "right"));
+  pr.el.classList.remove("ok", "bad");
+  if (vals.some(v => v === "")) { pr.tag.textContent = ""; pr.done = false; return; }
+  const nums = vals.map(Number);
+  const okAll = nums.every((v, k) => v === pr.want[k]);
+  if (okAll) {
+    pr.el.classList.add("ok"); pr.inputs.forEach(i => i.classList.add("right"));
+    pr.tag.textContent = "✓ Correct!"; pr.done = true;
+    if (speak) say("right" + (1 + Math.floor(Math.random() * 4)));
+    return;
+  }
+  pr.done = false; pr.el.classList.add("bad");
+  let hint = "Not quite. Fix the red box.";
+  if (pr.kind === "add") {
+    const [s, ra, rb, rs] = nums;
+    if (s !== pr.want[0]) hint = `Count it again: ${pr.a} + ${pr.b}.`;
+    else if (ra === pr.a && rb === pr.b && pr.a !== pr.b) hint = "Switch the numbers to make the turnaround!";
+    else if (rs !== pr.want[3]) hint = "A turnaround has the same answer.";
+    nums.forEach((v, k) => { if (v !== pr.want[k]) pr.inputs[k].classList.add("wrong"); });
+  } else {
+    const [a, b, s] = nums;
+    if (a !== pr.want[0] || b !== pr.want[1]) hint = a === pr.want[1] && b === pr.want[0] ? "Top dots go first, then the bottom." : "Count the dots on each half again.";
+    else hint = "Count all the dots again.";
+    nums.forEach((v, k) => { if (v !== pr.want[k]) pr.inputs[k].classList.add("wrong"); });
+  }
+  pr.tag.textContent = hint;
+  if (speak) say("wrong" + (1 + Math.floor(Math.random() * 2)));
+}
+function wsProgress() {
+  const n = probs.filter(p => p.done).length;
+  document.getElementById("wsprog").textContent = `${n} of ${probs.length} problems correct`;
+  try { if (n) LessonApp.sheet(n, probs.length); } catch (e) {}
+  const d = document.getElementById("wsdone");
+  d.hidden = n !== probs.length;
+  if (n === probs.length) d.textContent = "Page 48 is all done! Every answer is correct. Great job!";
+  return n;
+}
+function wsSave() { try { localStorage.setItem(WS_KEY, JSON.stringify(wsSaved)); } catch (e) {} }
+probs.forEach(pr => {
+  pr.inputs.forEach((inp, k) => {
+    inp.addEventListener("input", () => {
+      inp.value = inp.value.replace(/[^0-9]/g, "");
+      wsSaved[inp.id] = inp.value; wsSave();
+      const before = pr.done;
+      const full = pr.inputs.every(i => i.value.trim() !== "");
+      // move on to the next box once a digit is typed (answers here are all one digit)
+      if (inp.value.length >= 1 && k < pr.inputs.length - 1 && pr.inputs[k + 1].value === "") pr.inputs[k + 1].focus();
+      checkProb(pr, full && !before);
+      const n = wsProgress();
+      if (n === probs.length && !before) say("done_ws");
+    });
+  });
+  checkProb(pr, false);
+});
+wsProgress();
+document.getElementById("wsclear").onclick = () => {
+  wsSaved = {}; wsSave();
+  probs.forEach(pr => { pr.inputs.forEach(i => { i.value = ""; }); checkProb(pr, false); });
+  wsProgress();
+};
+
+fresh(); renderScore(); requestAnimationFrame(tick);
+</script>
+
+<link rel="stylesheet" href="../app.css">
+<link rel="stylesheet" href="../pip.css">
+<script src="../pip.js"></script>
+</body></html>
