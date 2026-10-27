@@ -170,11 +170,8 @@
     else v.addEventListener("loadedmetadata", () => { v.currentTime = t; }, { once: true });
   }
   // End of the narrator's answer after a question's pause ("Red! You got it..."), so it plays before the clip shrinks
-  // instead of opening the next clip. From QUIZ when the lesson has it, else from the page's own list for this render.
-  function reveal(i) {
-    if (Q[i].reveal) return Q[i].reveal;
-    return CFG.reveal && Math.abs(CFG.revealTotal - QUIZ.total) < 0.01 ? CFG.reveal[i] : null;
-  }
+  // instead of opening the next clip. Only questions that replace a pause in the video have one.
+  const reveal = i => Q[i].reveal || null;
   const after = i => reveal(i) || Q[i].resume;
   function openClip(i, outro) {
     busy = true; renderSigns();
@@ -256,6 +253,8 @@
     const again = el("button", "btn", "Hear it again"); again.type = "button"; again.onclick = () => own(q.id);
     foot.appendChild(again); card.appendChild(foot);
     quiz.appendChild(card); quiz.hidden = false;
+    // First tap on an answer reads it aloud (app.js, through #voice), second tap picks it; stop our question voice first.
+    card.addEventListener("click", () => voice.pause(), true);
     try { if (window.LessonApp && LessonApp.confirmChoices) LessonApp.confirmChoices(card, q.id); } catch (e) {}
     updateWorth(); own(q.id);
   }
