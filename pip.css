@@ -1,28 +1,34 @@
-/* Ask Pip: floating owl button and a bottom sheet with big, readable-at-a-glance parts */
+/* Ask Steve: floating hero button and a bottom sheet with big, readable-at-a-glance parts */
 .pip-fab { position: fixed; z-index: 40; right: max(18px, env(safe-area-inset-right, 0px)); bottom: calc(18px + env(safe-area-inset-bottom, 0px));
-  display: flex; align-items: center; gap: 10px; min-height: 76px; padding: 8px 24px 8px 10px; border-radius: 999px; border: 0;
-  background: var(--accent); color: #fff; font: 700 22px var(--display); box-shadow: 0 10px 30px rgba(30, 27, 75, 0.35); cursor: pointer;
-  touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-.pip-fab svg { width: 60px; height: 60px; background: #fff7e6; border-radius: 50%; }
-.pip-fab:focus-visible, .pip-panel button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
-.pip-panel { position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; justify-content: center; background: var(--scrim, rgba(30, 27, 75, 0.5));
+  display: flex; align-items: center; gap: 10px; min-height: 84px; padding: 6px 26px 6px 6px; border-radius: 999px;
+  border: 4px solid #3b1d86; background: linear-gradient(#8f5cf0, #6a35d6); color: #fff;
+  font: 400 28px "Lilita One", "Fredoka", system-ui, sans-serif; letter-spacing: 0.01em; text-shadow: 0 2px 0 #2a1266;
+  box-shadow: 0 6px 0 #2a1266, 0 14px 30px rgba(20, 10, 60, 0.45); cursor: pointer;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: transform 0.1s; }
+.pip-fab:active { transform: translateY(4px); box-shadow: 0 2px 0 #2a1266, 0 8px 20px rgba(20, 10, 60, 0.4); }
+.pip-fab img { width: 68px; height: 68px; border-radius: 50%; background: #bfe3ff; border: 3px solid #fff; object-fit: cover; display: block; }
+.pip-fab:focus-visible, .pip-panel button:focus-visible { outline: 4px solid #ffd43b; outline-offset: 3px; }
+.pip-panel { position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; justify-content: center; background: rgba(20, 12, 50, 0.55);
   padding: 16px max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
-.pip-card { width: min(100%, 760px); background: var(--surface); color: var(--ink); border-radius: 28px; padding: 20px; display: grid; gap: 14px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35); max-height: 100%; overflow: auto; }
+.pip-card { width: min(100%, 760px); background: #fffdf7; color: #1d1647; border: 5px solid #6a35d6; border-radius: 30px; padding: 20px; display: grid; gap: 14px;
+  box-shadow: 0 8px 0 #3b1d86, 0 24px 60px rgba(0, 0, 0, 0.4); max-height: 100%; overflow: auto; font-family: "Fredoka", system-ui, sans-serif; }
 .pip-top { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; }
-.pip-owl svg { width: 84px; height: 84px; background: #fff7e6; border-radius: 50%; display: block; }
-.pip-status { margin: 0; font: 600 22px/1.3 var(--display); }
-.pip-x { width: 56px; height: 56px; border-radius: 50%; border: 1px solid var(--line); background: var(--chip); color: var(--ink); font-size: 22px; cursor: pointer; }
-.pip-heard { margin: 0; justify-self: end; max-width: 85%; background: var(--chip); border-radius: 20px 20px 4px 20px; padding: 12px 16px; font: 500 22px/1.35 var(--display); }
-.pip-answer { margin: 0; max-width: 92%; background: #fff7e6; color: #3b2a14; border-radius: 20px 20px 20px 4px; padding: 14px 18px; font: 500 24px/1.4 var(--display); }
+.pip-owl img { width: 92px; height: 92px; border-radius: 50%; background: #bfe3ff; border: 4px solid #6a35d6; object-fit: cover; display: block; }
+.pip-status { margin: 0; font: 600 23px/1.3 "Fredoka", system-ui, sans-serif; }
+.pip-x { width: 58px; height: 58px; border-radius: 50%; border: 3px solid #d9cbff; background: #f1eaff; color: #3b1d86; font-size: 22px; font-weight: 700; cursor: pointer; }
+.pip-heard { margin: 0; justify-self: end; max-width: 85%; background: #ece4ff; border-radius: 22px 22px 6px 22px; padding: 12px 16px; font: 500 22px/1.35 "Fredoka", system-ui, sans-serif; }
+.pip-answer { margin: 0; max-width: 92%; background: #e3f4ff; color: #0f2a4a; border: 3px solid #9fd0f5; border-radius: 22px 22px 22px 6px; padding: 14px 18px; font: 500 24px/1.4 "Fredoka", system-ui, sans-serif; }
 .pip-btns { display: flex; flex-wrap: wrap; gap: 12px; }
-.pip-talk { flex: 1 1 260px; display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-height: 88px; border-radius: 22px; border: 0;
-  background: var(--accent); color: #fff; font: 700 26px var(--display); cursor: pointer; }
+.pip-talk { flex: 1 1 260px; display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-height: 90px; border-radius: 24px;
+  border: 4px solid #2b8a30; background: linear-gradient(#7be776, #44c24a); color: #0e3314; box-shadow: 0 6px 0 #23752a;
+  font: 400 32px "Lilita One", "Fredoka", system-ui, sans-serif; cursor: pointer; transition: transform 0.1s; }
+.pip-talk:active { transform: translateY(4px); box-shadow: 0 2px 0 #23752a; }
 .pip-talk svg { width: 40px; height: 40px; }
-.pip-talk.on { background: #dc2626; animation: pip-pulse 1.2s ease-in-out infinite; }
+.pip-talk.on { background: linear-gradient(#ff7a7a, #e23b3b); border-color: #a51d1d; color: #fff; box-shadow: 0 6px 0 #861616; animation: pip-pulse 1.2s ease-in-out infinite; }
 .pip-talk:disabled { opacity: 0.6; }
-.pip-again { min-height: 88px; padding: 0 24px; border-radius: 22px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); font: 600 20px var(--display); cursor: pointer; }
+.pip-again { min-height: 90px; padding: 0 24px; border-radius: 24px; border: 4px solid #d9cbff; background: #f1eaff; color: #3b1d86; box-shadow: 0 6px 0 #c4b2f5;
+  font: 600 21px "Fredoka", system-ui, sans-serif; cursor: pointer; }
 @keyframes pip-pulse { 50% { transform: scale(1.03); } }
-@media (prefers-reduced-motion: reduce) { .pip-talk.on { animation: none; } }
-@media (max-width: 520px) { .pip-fab span { display: none; } .pip-fab { padding: 8px; } }
-.pip-load { margin: 0; color: var(--muted); font: 500 16px var(--display); font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .pip-talk.on { animation: none; } .pip-fab, .pip-talk { transition: none; } }
+@media (max-width: 520px) { .pip-fab span { display: none; } .pip-fab { padding: 6px; } }
+.pip-load { margin: 0; color: #5b5785; font: 500 16px "Fredoka", system-ui, sans-serif; font-variant-numeric: tabular-nums; }

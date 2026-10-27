@@ -1,112 +1,149 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="apple-touch-icon" href="icon.png"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Math Lessons</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Lilita+One&display=swap">
+<link rel="preload" as="image" href="art/bg.jpg">
 <style>
-/* Layout: a workbook shelf. "Up next" card on top, then one big tappable card per workbook page, then a folded parents' corner. */
+/* Layout: a blocky adventure world. Wooden title sign and Steve up top, a big "Up next" panel, one illustrated card per workbook page, then a stone bar for grown-ups. */
 :root {
-  --bg: #f5f3ff; --surface: #ffffff; --ink: #1e1b4b; --muted: #5b5785; --accent: #7c5cff; --chip: #ede9fe; --line: #ddd6fe;
-  --good: #16a34a; --good-soft: #dcfce7; --gold: #f59e0b; --on-accent: #ffffff;
-  --t45: #8b5cf6; --t46: #0ea5e9; --t47: #f97316; --t48: #10b981; --t49: #ec4899;
-  --display: "Fredoka", "Trebuchet MS", system-ui, sans-serif;
+  --ink: #1d1647; --panel: #6a35d6; --panel-hi: #8f5cf0; --panel-edge: #3b1d86; --panel-deep: #2a1266;
+  --go: #44c24a; --go-hi: #7be776; --go-edge: #2b8a30; --go-deep: #23752a; --go-ink: #0e3314;
+  --wood: #a8642c; --wood-hi: #c98042; --wood-edge: #5e3413; --plank: #f1d29a; --plank-edge: #8a5a25;
+  --stone: rgba(28, 32, 52, 0.9); --gold: #ffc531; --dim: #c9c3e8;
+  --t45: #f59a2c; --t46: #2f8fe6; --t47: #e8a21a; --t48: #2cbf73; --t49: #ec4fa0;
+  --display: "Lilita One", "Fredoka", "Trebuchet MS", system-ui, sans-serif;
+  --body: "Fredoka", "Trebuchet MS", system-ui, sans-serif;
+  color-scheme: light;
 }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #13112a; --surface: #1e1b3a; --ink: #f5f3ff; --muted: #b4aedb; --accent: #a78bfa; --chip: #2a2550; --line: #3b3570;
-  --good: #4ade80; --good-soft: #14361f; --gold: #fbbf24; --on-accent: #13112a;
-  --t45: #a78bfa; --t46: #38bdf8; --t47: #fb923c; --t48: #34d399; --t49: #f472b6; color-scheme: dark } }
-:root[data-theme="dark"] {
-  --bg: #13112a; --surface: #1e1b3a; --ink: #f5f3ff; --muted: #b4aedb; --accent: #a78bfa; --chip: #2a2550; --line: #3b3570;
-  --good: #4ade80; --good-soft: #14361f; --gold: #fbbf24; --on-accent: #13112a;
-  --t45: #a78bfa; --t46: #38bdf8; --t47: #fb923c; --t48: #34d399; --t49: #f472b6; color-scheme: dark }
 html { -webkit-text-size-adjust: 100%; }
-body { background: var(--bg); color: var(--ink); font-family: var(--display); }
-a, button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; font-family: var(--display); }
-a:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
-.wrap { max-width: 1100px; margin: 0 auto; padding-block: 24px 48px;
+body { background: #6fb7ee; color: var(--ink); font-family: var(--body); min-height: 100vh; }
+/* the world sits still behind everything (iPad Safari ignores background-attachment: fixed) */
+.world { position: fixed; inset: 0; z-index: -1; background: #6fb7ee url("art/bg.jpg") center / cover no-repeat; }
+.world::after { content: ""; position: absolute; inset: 0; background: linear-gradient(rgba(10, 20, 60, 0) 30%, rgba(10, 20, 60, 0.18)); }
+a, button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 4px solid var(--gold); outline-offset: 4px; }
+.outline { color: #fff; text-shadow: 0 3px 0 rgba(0,0,0,.55), 2px 0 0 #1d1647, -2px 0 0 #1d1647, 0 2px 0 #1d1647, 0 -2px 0 #1d1647, 2px 2px 0 #1d1647, -2px 2px 0 #1d1647, 2px -2px 0 #1d1647, -2px -2px 0 #1d1647; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 18px 120px;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
-  display: grid; gap: 22px; }
-header { display: grid; gap: 4px; }
-h1 { margin: 0; font-size: clamp(32px, 5.5vw, 48px); font-weight: 700; text-wrap: balance; }
-.hello { margin: 0; color: var(--muted); font-size: 20px; }
-h2 { margin: 0; font-size: 22px; font-weight: 600; }
+  display: grid; gap: 18px; position: relative; }
+
+/* Title sign */
+.hero { position: relative; display: grid; justify-items: center; padding-right: clamp(0px, 20vw, 240px); min-height: 170px; align-content: start; }
+.sign { position: relative; padding: 10px 34px 14px; border-radius: 18px; border: 5px solid var(--wood-edge);
+  background: repeating-linear-gradient(180deg, var(--wood-hi) 0 30px, var(--wood) 30px 33px, var(--wood-hi) 33px 60px);
+  box-shadow: inset 0 -6px 0 rgba(0,0,0,.18), 0 8px 0 rgba(60, 30, 8, .55), 0 16px 30px rgba(0,0,0,.3); }
+.sign::before, .sign::after { content: ""; position: absolute; top: 50%; width: 12px; height: 12px; margin-top: -6px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #e9e1d4, #6b6255); box-shadow: 0 1px 0 rgba(0,0,0,.4); }
+.sign::before { left: 10px; } .sign::after { right: 10px; }
+h1 { margin: 0; font: 400 clamp(46px, 8.4vw, 88px)/1 var(--display); letter-spacing: 0.01em; white-space: nowrap; }
+h1 .m { color: #ffd43b; }
+.plank { position: relative; margin: -6px 0 0; max-width: 520px; padding: 10px 26px; border-radius: 12px; border: 4px solid var(--plank-edge);
+  background: linear-gradient(var(--plank), #e3bb79); color: #4a2a0c; font: 600 clamp(17px, 2.2vw, 21px)/1.3 var(--body); text-align: center; text-wrap: balance;
+  box-shadow: 0 6px 0 rgba(80, 45, 10, .5); }
+.steve { position: absolute; right: -10px; top: -6px; width: clamp(150px, 24vw, 270px); height: auto; z-index: 3; pointer-events: none;
+  filter: drop-shadow(0 10px 14px rgba(0,0,0,.35)); }
 
 /* Up next */
-.next { display: grid; grid-template-columns: auto 1fr; gap: 18px 22px; align-items: center; background: var(--surface);
-  border: 2px solid var(--accent); border-radius: 26px; padding: 18px; color: inherit; text-decoration: none; }
-.next .tile { width: 120px; height: 120px; }
-.next .eyebrow { font-size: 15px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
-.next .ttl { font-size: clamp(24px, 3.6vw, 32px); font-weight: 700; margin: 2px 0 12px; text-wrap: balance; }
-.go { display: inline-flex; align-items: center; gap: 10px; min-height: 64px; padding: 0 28px; border-radius: 18px;
-  background: var(--accent); color: var(--on-accent); font-size: 24px; font-weight: 700; }
-.go svg { width: 26px; height: 26px; fill: currentColor; }
-.alldone { font-size: 22px; color: var(--good); font-weight: 600; margin: 0; }
+.next { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(180px, 280px) 1fr; gap: 16px 24px; align-items: center;
+  margin-right: clamp(0px, 9vw, 110px);
+  background: linear-gradient(160deg, var(--panel-hi), var(--panel) 60%); border: 5px solid var(--panel-edge); border-radius: 30px; padding: 16px;
+  box-shadow: inset 0 3px 0 rgba(255,255,255,.25), 0 8px 0 var(--panel-deep), 0 20px 40px rgba(20, 10, 60, .35); color: #fff; text-decoration: none; }
+.next .thumb { position: relative; aspect-ratio: 16 / 10; border-radius: 20px; overflow: hidden; border: 4px solid #fff; box-shadow: 0 4px 0 rgba(0,0,0,.25); background: #9fd3ff; }
+.next .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.next .eyebrow { display: block; font: 600 17px var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: #ffe27a; }
+.next .ttl { display: block; font: 400 clamp(28px, 4vw, 42px)/1.1 var(--display); margin: 4px 0 14px; text-wrap: balance; text-shadow: 0 3px 0 var(--panel-deep); }
+.go { display: inline-flex; align-items: center; gap: 12px; min-height: 76px; padding: 0 34px 0 26px; border-radius: 22px;
+  border: 4px solid var(--go-edge); background: linear-gradient(var(--go-hi), var(--go)); color: var(--go-ink);
+  font: 400 clamp(28px, 3.6vw, 38px) var(--display); box-shadow: inset 0 3px 0 rgba(255,255,255,.45), 0 7px 0 var(--go-deep), 0 12px 20px rgba(0,0,0,.25); transition: transform .1s, box-shadow .1s; }
+.next:active .go { transform: translateY(5px); box-shadow: inset 0 3px 0 rgba(255,255,255,.45), 0 2px 0 var(--go-deep); }
+.go svg { width: 30px; height: 30px; fill: currentColor; }
+.next .pg { position: absolute; left: 10px; bottom: 10px; }
+.pg { display: inline-flex; align-items: center; min-height: 38px; padding: 0 16px; border-radius: 999px; background: #241458; color: #fff;
+  border: 3px solid #fff; font: 400 20px var(--display); letter-spacing: 0.02em; white-space: nowrap; font-variant-numeric: tabular-nums; box-shadow: 0 3px 0 rgba(0,0,0,.3); }
+.alldone { display: block; font: 400 30px var(--display); color: #fff; margin: 0; }
 
-/* Lesson cards */
-.shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
-.card { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: start; min-height: 150px; padding: 16px;
-  background: var(--surface); border: 1px solid var(--line); border-radius: 22px; color: inherit; text-decoration: none;
-  transition: transform 0.12s; }
-.card:active { transform: scale(0.98); }
-.card.soon { opacity: 0.6; }
-.tile { width: 92px; height: 92px; border-radius: 20px; display: grid; place-items: center; position: relative; color: #fff; }
-.tile svg { width: 64%; height: 64%; }
-.tile .pg { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); background: var(--surface); color: var(--ink);
-  border: 2px solid currentColor; border-radius: 999px; padding: 1px 10px; font-size: 15px; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.info { display: grid; gap: 8px; min-width: 0; }
-.ctitle { font-size: 21px; font-weight: 600; line-height: 1.2; text-wrap: balance; }
-.steps { display: flex; flex-wrap: wrap; gap: 6px; }
-.step { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 2px 12px; border-radius: 999px;
-  background: var(--chip); color: var(--muted); font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; }
-.step.done { background: var(--good-soft); color: var(--good); font-weight: 600; }
-.step svg { width: 18px; height: 18px; flex: none; }
+/* Section label: a small wooden sign */
+.label { justify-self: start; margin: 6px 0 -4px; padding: 6px 22px 8px; border-radius: 12px; border: 4px solid var(--wood-edge);
+  background: linear-gradient(var(--wood-hi), var(--wood)); font: 400 clamp(26px, 3.4vw, 34px) var(--display); box-shadow: 0 6px 0 rgba(60, 30, 8, .55); }
+
+/* Lesson cards: the picture is the card */
+.shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+.card { --c: var(--t45); position: relative; display: grid; grid-template-rows: 1fr auto; min-height: 210px; aspect-ratio: 16 / 9.5; overflow: hidden;
+  border: 5px solid var(--c); border-radius: 26px; color: #fff; text-decoration: none; background: #9fd3ff;
+  box-shadow: inset 0 0 0 3px rgba(255,255,255,.35), 0 7px 0 rgba(0,0,0,.35), 0 16px 30px rgba(0,0,0,.28);
+  box-shadow: inset 0 0 0 3px rgba(255,255,255,.35), 0 7px 0 color-mix(in srgb, var(--c) 60%, #000), 0 16px 30px rgba(0,0,0,.28); transition: transform .12s; }
+.card:active { transform: translateY(4px) scale(0.99); }
+.card .art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.card::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, rgba(0,0,0,0) 30%, rgba(10,10,40,.38) 100%), linear-gradient(rgba(0,0,0,0) 55%, rgba(10,10,40,.55)); }
+.card .ctitle { position: relative; z-index: 1; align-self: center; justify-self: end; max-width: 62%; padding: 12px 16px 0 0; text-align: right;
+  font: 400 clamp(25px, 2.6vw, 31px)/1.08 var(--display); text-wrap: balance; }
+.card .foot { position: relative; z-index: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 0 12px 12px; }
+.card .pg { border-color: #fff; background: #241458; background: color-mix(in srgb, var(--c) 35%, #170c3d); }
+.step { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: 999px;
+  background: rgba(20, 16, 45, .82); color: #fff; font: 500 17px var(--body); font-variant-numeric: tabular-nums; border: 2px solid rgba(255,255,255,.25); }
+.step.done { background: #1f8a3a; border-color: #8ff09a; font-weight: 600; }
+.step svg { width: 20px; height: 20px; flex: none; }
+.step.sheet { position: absolute; top: 12px; left: 12px; width: 48px; min-height: 48px; padding: 0; justify-content: center; }
+.step.sheet svg { width: 24px; height: 24px; }
 .stars { display: inline-flex; gap: 1px; }
-.stars svg { width: 18px; height: 18px; }
+.stars svg { width: 20px; height: 20px; }
 
-/* Parents' corner */
-details { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 6px 18px; }
-summary { min-height: 56px; display: flex; align-items: center; font-size: 20px; font-weight: 600; cursor: pointer; }
-.pc { display: grid; gap: 12px; padding-bottom: 14px; }
-.pc p { margin: 0; color: var(--muted); font-size: 16px; line-height: 1.5; max-width: 70ch; }
+/* Grown-ups: a dark stone bar */
+details { background: var(--stone); color: #fff; border: 3px solid rgba(255,255,255,.18); border-radius: 22px; padding: 4px 20px;
+  box-shadow: 0 6px 0 rgba(0,0,0,.35); }
+summary { min-height: 64px; display: flex; align-items: center; gap: 14px; font: 600 21px var(--body); cursor: pointer; list-style: none; }
+summary::-webkit-details-marker { display: none; }
+summary .trophy { width: 34px; height: 34px; flex: none; }
+summary .chev { margin-left: auto; width: 26px; height: 26px; transition: transform .2s; }
+details[open] summary .chev { transform: rotate(90deg); }
+.pc { display: grid; gap: 12px; padding-bottom: 16px; }
+.pc p { margin: 0; color: var(--dim); font-size: 16px; line-height: 1.5; max-width: 70ch; }
 .tablewrap { overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; font-size: 16px; }
-th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line); }
-th { color: var(--muted); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
+th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid rgba(255,255,255,.15); }
+th { color: var(--dim); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
 td.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
-.reset { justify-self: start; min-height: 52px; padding: 0 20px; border-radius: 14px; border: 1px solid var(--line);
-  background: var(--chip); color: var(--ink); font-size: 17px; font-weight: 600; cursor: pointer; }
-.reset.armed { background: #dc2626; border-color: #dc2626; color: #fff; }
+.reset { justify-self: start; min-height: 52px; padding: 0 20px; border-radius: 14px; border: 2px solid rgba(255,255,255,.3);
+  background: rgba(255,255,255,.1); color: #fff; font: 600 17px var(--body); cursor: pointer; }
+.reset.armed { background: #dc2626; border-color: #dc2626; }
 
-@media (max-width: 520px) {
-  .next { grid-template-columns: 1fr; justify-items: start; }
-  .next .tile { width: 92px; height: 92px; }
+@media (max-width: 760px) {
+  .hero { padding-right: 0; justify-items: start; min-height: 0; }
+  .sign { padding: 8px 22px 12px; }
+  .plank { margin: 10px 0 0; max-width: calc(100% - 120px); text-align: left; }
+  .steve { width: 130px; right: -6px; top: 70px; }
+  .next { margin-right: 0; grid-template-columns: 1fr; }
+  .next .thumb { max-width: 340px; }
 }
-@media (prefers-reduced-motion: reduce) { .card { transition: none; } }
+@media (max-width: 420px) { h1 { font-size: 40px; } .steve { width: 110px; top: 64px; } .plank { max-width: calc(100% - 96px); font-size: 16px; } }
+@media (prefers-reduced-motion: reduce) { .card, .go { transition: none; } }
 </style>
 
+<div class="world" aria-hidden="true"></div>
 <div class="wrap">
-  <header>
-    <h1>Math Lessons</h1>
-    <p class="hello" id="hello">Watch the video, answer the questions, then do the page on screen.</p>
+  <header class="hero">
+    <div class="sign"><h1 class="outline"><span class="m">Math</span> Lessons</h1></div>
+    <p class="plank" id="hello">Watch the video, answer the questions, then do the page on screen.</p>
+    <img class="steve" src="art/steve.webp" alt="" width="483" height="706">
   </header>
 
   <a class="next" id="next" href="p45/index.html">
-    <span class="tile" id="next-tile"></span>
+    <span class="thumb"><img id="next-art" src="art/p45.webp" alt="" width="960" height="540"><span class="pg" id="next-pg">Page 45</span></span>
     <span>
       <span class="eyebrow">Up next</span>
-      <span class="ttl" id="next-title" style="display:block">Patterns Don't Always Repeat!</span>
-      <span class="go" id="next-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l14 8-14 8z"/></svg><span id="next-label">Start</span></span>
+      <span class="ttl" id="next-title">Patterns Don't Always Repeat!</span>
+      <span class="go" id="next-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l14 8-14 8z"/></svg><span id="next-label">Let's Go!</span></span>
     </span>
   </a>
 
-  <section style="display:grid;gap:12px" aria-labelledby="all-title">
-    <h2 id="all-title">All lessons</h2>
-    <div class="shelf" id="shelf"></div>
-  </section>
+  <h2 class="label outline" id="all-title">All Lessons</h2>
+  <div class="shelf" id="shelf" aria-labelledby="all-title"></div>
 
   <details id="parents">
-    <summary>For grown-ups: scores</summary>
+    <summary><svg class="trophy" viewBox="0 0 24 24" aria-hidden="true"><path fill="#ffc531" d="M6 3h12v3h3v2a5 5 0 0 1-4.6 5A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1A5 5 0 0 1 7.6 13 5 5 0 0 1 3 8V6h3zm0 5V8H5a3 3 0 0 0 1.4 2.5A6 6 0 0 1 6 8zm12 0a6 6 0 0 1-.4 2.5A3 3 0 0 0 19 8z"/></svg>For grown-ups: scores<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
     <div class="pc">
-      <p>Scores are saved on this iPad only, in Safari. Pip, the owl button, answers spoken questions using Claude. Video points are 4 for a first-try answer, then 3, 2 and 1. "Best" is the best full run through the video.</p>
+      <p>Scores are saved on this iPad only, in Safari. Steve, the helper button, answers spoken questions using Claude. Video points are 4 for a first-try answer, then 3, 2 and 1. "Best" is the best full run through the video.</p>
       <div class="tablewrap"><table>
         <thead><tr><th>Page</th><th>Lesson</th><th>Best video score</th><th>Last</th><th>Times watched</th><th>Worksheet</th><th>Last opened</th></tr></thead>
         <tbody id="rows"></tbody>
@@ -119,16 +156,11 @@ td.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
 <script>
 // Each lesson page saves its results under "mathapp:<page>" (see app.js).
 const LESSONS = [
-  { id: "p45", page: 45, title: "Patterns Don't Always Repeat!", q: 12, sheet: false, color: "--t45",
-    icon: '<circle cx="8" cy="30" r="7"/><rect x="18" y="23" width="14" height="14" rx="2"/><circle cx="42" cy="30" r="7"/><rect x="52" y="23" width="14" height="14" rx="2" opacity="0.5"/>' },
-  { id: "p46", page: 46, title: "Make a Graph!", q: 11, sheet: true, color: "--t46",
-    icon: '<rect x="4" y="34" width="12" height="22" rx="2"/><rect x="22" y="14" width="12" height="42" rx="2"/><rect x="40" y="26" width="12" height="30" rx="2"/>' },
-  { id: "p47", page: 47, title: "Review Day: Sums of 5", q: 10, sheet: true, color: "--t47",
-    icon: '<text x="32" y="50" text-anchor="middle" font-size="52" font-weight="700" font-family="Fredoka, system-ui, sans-serif">5</text>' },
-  { id: "p48", page: 48, title: "Domino Facts and Turnarounds", q: 10, sheet: true, color: "--t48",
-    icon: '<rect x="18" y="2" width="28" height="56" rx="6" fill="none" stroke="currentColor" stroke-width="4"/><line x1="22" y1="30" x2="42" y2="30" stroke="currentColor" stroke-width="4"/><circle cx="26" cy="11" r="3.5"/><circle cx="38" cy="21" r="3.5"/><circle cx="32" cy="44" r="3.5"/>' },
-  { id: "p49", page: 49, title: "Draw Circles to Show Addition!", q: 9, sheet: true, color: "--t49",
-    icon: '<rect x="2" y="12" width="60" height="36" rx="6" fill="none" stroke="currentColor" stroke-width="4"/><line x1="32" y1="12" x2="32" y2="48" stroke="currentColor" stroke-width="4"/><circle cx="17" cy="30" r="7"/><circle cx="41" cy="23" r="5.5"/><circle cx="53" cy="37" r="5.5"/>' },
+  { id: "p45", page: 45, title: "Patterns Don't Always Repeat!", q: 12, sheet: false, color: "--t45" },
+  { id: "p46", page: 46, title: "Make a Graph!", q: 11, sheet: true, color: "--t46" },
+  { id: "p47", page: 47, title: "Review Day: Sums of 5", q: 10, sheet: true, color: "--t47" },
+  { id: "p48", page: 48, title: "Domino Facts and Turnarounds", q: 10, sheet: true, color: "--t48" },
+  { id: "p49", page: 49, title: "Draw Circles to Show Addition!", q: 9, sheet: true, color: "--t49" },
 ];
 function rec(id) { try { return JSON.parse(localStorage.getItem("mathapp:" + id) || "{}") || {}; } catch (e) { return {}; } }
 function starCount(best, max) { const p = best / max; return p >= 0.9 ? 3 : p >= 0.7 ? 2 : 1; }
@@ -138,12 +170,6 @@ const CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 
 const PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 4l14 8-14 8z"/></svg>';
 const PENCIL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" d="M4 20l1-5L15.5 4.5l4 4L9 19z"/></svg>';
 
-function tile(L, big) {
-  const t = el("span", "tile"); t.style.background = `var(${L.color})`;
-  t.innerHTML = `<svg viewBox="0 0 64 60" fill="currentColor" aria-hidden="true">${L.icon}</svg>`;
-  const pg = el("span", "pg", "Page " + L.page); pg.style.color = `var(${L.color})`; t.appendChild(pg);
-  return t;
-}
 function videoDone(r) { return r.best != null; }
 function finished(L, r) { return videoDone(r) && (!L.sheet || r.sheetDone); }
 
@@ -155,23 +181,27 @@ function render() {
     const r = rec(L.id), max = L.q * 4;
     if (!nextL && !finished(L, r)) nextL = L;
     const a = el("a", "card"); a.href = L.id + "/index.html"; a.id = "lesson-" + L.id;
-    a.appendChild(tile(L));
-    const info = el("span", "info");
-    info.appendChild(el("span", "ctitle", L.title));
-    const steps = el("span", "steps");
+    a.style.setProperty("--c", `var(${L.color})`);
+    const img = el("img", "art"); img.src = `art/${L.id}.webp`; img.alt = ""; img.width = 960; img.height = 540; img.loading = "lazy";
+    a.appendChild(img);
+    a.appendChild(el("span", "ctitle outline", L.title));
+    const steps = el("span", "foot");
+    steps.appendChild(el("span", "pg", "Page " + L.page));
     const v = el("span", "step" + (videoDone(r) ? " done" : ""));
     if (videoDone(r)) {
       const n = starCount(r.best, max);
-      v.innerHTML = `<span class="stars" aria-label="${n} of 3 stars">${[0, 1, 2].map(k => STAR(k < n ? "var(--gold)" : "var(--line)")).join("")}</span>${r.best} / ${max}`;
+      v.innerHTML = `<span class="stars" aria-label="${n} of 3 stars">${[0, 1, 2].map(k => STAR(k < n ? "var(--gold)" : "rgba(255,255,255,.35)")).join("")}</span>${r.best} / ${max}`;
     } else v.innerHTML = `${PLAY}Video, ${L.q} questions`;
     steps.appendChild(v);
     if (L.sheet) {
-      const w = el("span", "step" + (r.sheetDone ? " done" : ""));
-      w.innerHTML = r.sheetDone ? `${CHECK}Page ${L.page} done` : r.sheetTotal ? `${PENCIL}${r.sheetBest} of ${r.sheetTotal} right` : `${PENCIL}Page ${L.page} on screen`;
+      // worksheet: a round pencil badge, a check once it's all right (details are in the grown-ups table)
+      const w = el("span", "step sheet" + (r.sheetDone ? " done" : ""));
+      w.innerHTML = r.sheetDone ? CHECK : PENCIL;
+      w.setAttribute("role", "img");
+      w.setAttribute("aria-label", r.sheetDone ? `Page ${L.page} done` : r.sheetTotal ? `Page ${L.page}: ${r.sheetBest} of ${r.sheetTotal} right` : `Page ${L.page} on screen`);
       steps.appendChild(w);
     }
-    info.appendChild(steps);
-    a.appendChild(info);
+    a.appendChild(steps);
     shelf.appendChild(a);
 
     const tr = el("tr");
@@ -189,9 +219,10 @@ function render() {
   if (nextL) {
     const r = rec(nextL.id);
     next.href = nextL.id + "/index.html";
-    const t = document.getElementById("next-tile"); t.replaceWith(Object.assign(tile(nextL), { id: "next-tile" }));
+    document.getElementById("next-art").src = `art/${nextL.id}.webp`;
+    document.getElementById("next-pg").textContent = "Page " + nextL.page;
     document.getElementById("next-title").textContent = nextL.title;
-    document.getElementById("next-label").textContent = videoDone(r) ? `Finish page ${nextL.page}` : r.opened ? "Keep going" : "Start";
+    document.getElementById("next-label").textContent = videoDone(r) ? `Finish page ${nextL.page}` : r.opened ? "Keep Going!" : "Let's Go!";
     next.hidden = false;
   } else {
     next.hidden = true;

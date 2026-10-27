@@ -1,4 +1,4 @@
-// Ask Pip: Joshua taps the owl, says his question, and Pip answers out loud.
+// Ask Steve: Joshua taps Steve, says his question, and Steve answers out loud.
 // Speech-to-text is Safari's built-in recognizer; answers come from Claude through the ask-pip function.
 (function () {
   const ENDPOINT = "https://nkumukzkrfdfnicozefu.supabase.co/functions/v1/ask-pip";
@@ -6,29 +6,27 @@
   const page = (location.pathname.match(/\/(p\d+)\//) || [])[1] || "home";
   const HKEY = "pip-history:" + page;
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const VOICE_DIR = new URL("voice/", (document.currentScript && document.currentScript.src) || location.href).href;
+  
 
-  const OWL = `<svg viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="38" rx="22" ry="22" fill="#8b5a2b"/><path d="M12 18 L20 26 L14 30Z M52 18 L44 26 L50 30Z" fill="#8b5a2b"/>
-    <ellipse cx="32" cy="44" rx="13" ry="13" fill="#f3d7a8"/><circle cx="23" cy="31" r="9" fill="#fff"/><circle cx="41" cy="31" r="9" fill="#fff"/>
-    <circle cx="24" cy="32" r="4.5" fill="#1e1b4b"/><circle cx="40" cy="32" r="4.5" fill="#1e1b4b"/><circle cx="25.5" cy="30.5" r="1.4" fill="#fff"/><circle cx="41.5" cy="30.5" r="1.4" fill="#fff"/>
-    <path d="M29 38 L35 38 L32 43Z" fill="#f59e0b"/></svg>`;
+  const BASE = new URL("./", (document.currentScript && document.currentScript.src) || location.href).href;
+  const FACE = `<img src="${BASE}art/steve-head.webp" alt="" width="240" height="240" draggable="false">`;
   const MIC = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M8.5 21h7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
 
   function el(tag, cls, html) { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
   let fab, panel, statusEl, heardEl, answerEl, loadEl, talkBtn, againBtn, rec = null, busy = false;
 
   function build() {
-    fab = el("button", "pip-fab", OWL + "<span>Ask Pip</span>");
-    fab.type = "button"; fab.id = "pip-open"; fab.setAttribute("aria-label", "Ask Pip a question by talking");
-    panel = el("div", "pip-panel"); panel.hidden = true; panel.setAttribute("role", "dialog"); panel.setAttribute("aria-label", "Ask Pip");
+    fab = el("button", "pip-fab", FACE + "<span>Ask Steve</span>");
+    fab.type = "button"; fab.id = "pip-open"; fab.setAttribute("aria-label", "Ask Steve a question by talking");
+    panel = el("div", "pip-panel"); panel.hidden = true; panel.setAttribute("role", "dialog"); panel.setAttribute("aria-label", "Ask Steve");
     panel.innerHTML = `<div class="pip-card">
-      <div class="pip-top"><span class="pip-owl">${OWL}</span><p class="pip-status" id="pip-status" aria-live="polite"></p>
+      <div class="pip-top"><span class="pip-owl">${FACE}</span><p class="pip-status" id="pip-status" aria-live="polite"></p>
         <button class="pip-x" id="pip-close" type="button" aria-label="Close">✕</button></div>
       <p class="pip-heard" id="pip-heard" hidden></p>
       <p class="pip-answer" id="pip-answer" hidden></p>
       <p class="pip-load" id="pip-load" hidden></p>
       <div class="pip-btns">
-        <button class="pip-talk" id="pip-talk" type="button">${MIC}<span>Talk to Pip</span></button>
+        <button class="pip-talk" id="pip-talk" type="button">${MIC}<span>Talk to Steve</span></button>
         <button class="pip-again" id="pip-again" type="button" hidden>Hear it again</button>
       </div></div>`;
     document.body.appendChild(fab); document.body.appendChild(panel);
@@ -51,10 +49,11 @@
   }
   function status(t) { statusEl.textContent = t; }
 
-  // ---- Pip's voice ----
+  // ---- Steve's voice ----
   // The same Kokoro "am_puck" voice as the lesson videos, made right on the iPad by voice/pip-voice-worker.js.
   // The first time, the voice (about 110 MB) downloads and is kept in the browser's cache. Until it is ready,
-  // or if it can't run, Pip falls back to the iPad's built-in voice.
+  // or if it can't run, Steve falls back to the iPad's built-in voice.
+  const VOICE_DIR = BASE + "voice/";
   let worker = null, voiceState = "off", ctx = null, nextAt = 0, speakId = 0, sources = [];
   let lastText = "", lastChunks = [], waiting = null, waitTimer = null;
   const lineCache = {};
@@ -75,7 +74,7 @@
   }
   function onVoice({ data }) {
     if (data.type === "progress" && voiceState === "loading") {
-      loadEl.hidden = false; loadEl.textContent = "Getting Pip's voice ready… " + Math.round(data.value * 100) + "%";
+      loadEl.hidden = false; loadEl.textContent = "Getting Steve's voice ready… " + Math.round(data.value * 100) + "%";
     } else if (data.type === "ready") {
       voiceState = "ready"; loadEl.hidden = true;
       if (waiting) { const t = waiting; waiting = null; clearTimeout(waitTimer); speak(t); }
@@ -121,7 +120,7 @@
     if (!lastChunks.length) { speak(lastText); return; }
     const chunks = lastChunks; hush(); lastChunks = chunks; chunks.forEach(playBuffer);
   }
-  // Short fixed lines were recorded ahead of time in Pip's voice.
+  // Short fixed lines were recorded ahead of time in Steve's voice.
   async function line(name, text) {
     hush();
     try {
@@ -145,7 +144,7 @@
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
       const v = pipVoice(); if (v) u.voice = v;
-      u.lang = "en-US"; u.rate = 0.9; u.pitch = 1.3;
+      u.lang = "en-US"; u.rate = 0.9; u.pitch = 1.15;
       speechSynthesis.speak(u);
     } catch (e) {}
   }
@@ -163,7 +162,7 @@
     wakeVoice();
     if (busy) return;
     if (!SR) {
-      status("Pip can only hear you in Safari. Ask a grown-up to open this page in Safari.");
+      status("Steve can only hear you in Safari. Ask a grown-up to open this page in Safari.");
       talkBtn.hidden = true; return;
     }
     hush();
@@ -178,16 +177,16 @@
     };
     rec.onerror = ev => { failed = ev.error; };
     rec.onend = () => {
-      rec = null; talkBtn.classList.remove("on"); talkBtn.querySelector("span").textContent = "Talk to Pip";
+      rec = null; talkBtn.classList.remove("on"); talkBtn.querySelector("span").textContent = "Talk to Steve";
       if (failed === "not-allowed" || failed === "service-not-allowed") {
-        status("Pip needs the microphone. Grown-ups: tap the aA button in Safari's address bar, then Website Settings, and set Microphone to Allow.");
+        status("Steve needs the microphone. Grown-ups: tap the aA button in Safari's address bar, then Website Settings, and set Microphone to Allow.");
         return;
       }
-      if (failed === "audio-capture") { status("Pip can't find the microphone on this iPad."); return; }
-      if (!heard) { status("Pip didn't hear anything. Tap Talk to Pip and try again!"); line("nothear", "Hoo! I didn't hear you. Tap the button and try again!"); return; }
+      if (failed === "audio-capture") { status("Steve can't find the microphone on this iPad."); return; }
+      if (!heard) { status("Steve didn't hear anything. Tap Talk to Steve and try again!"); line("nothear", "Oops, I didn't hear you. Tap the button and try again!"); return; }
       ask(heard);
     };
-    try { rec.start(); } catch (e) { rec = null; status("Pip can't listen right now. Try again in a moment."); }
+    try { rec.start(); } catch (e) { rec = null; status("Steve can't listen right now. Try again in a moment."); }
   }
 
   // ---- asking ----
@@ -198,7 +197,7 @@
   }
   async function ask(q) {
     busy = true; talkBtn.disabled = true;
-    status("Pip is thinking…");
+    status("Steve is thinking…");
     line("think", "Hmm, let me think!");
     let answer = null, err = null;
     try {
@@ -212,21 +211,21 @@
     } catch (e) { err = "offline"; }
     busy = false; talkBtn.disabled = false;
     if (!answer) {
-      const [name, msg] = err === "rate_limited" ? ["rest", "Pip needs a little rest. Let's try again in a minute!"]
-        : err === "offline" ? ["offline", "Pip can't reach the internet right now. Let's try again soon!"]
-        : err === "no_key" ? ["notset", "Pip isn't set up yet. Grown-ups: the Claude key still needs to be added in Supabase."]
-        : ["mixed", "Hoo! Pip got mixed up. Let's try again!"];
-      status(msg); line(name, msg);
+      const [name, msg, said] = err === "rate_limited" ? ["rest", "Steve needs a little rest. Let's try again in a minute!", "I need a little rest. Let's try again in a minute!"]
+        : err === "offline" ? ["offline", "Steve can't reach the internet right now. Let's try again soon!", "I can't reach the internet right now. Let's try again soon!"]
+        : err === "no_key" ? ["notset", "Steve isn't set up yet. Grown-ups: the Claude key still needs to be added in Supabase.", "I'm not set up yet. Ask a grown-up for help!"]
+        : ["mixed", "Whoops! Steve got mixed up. Let's try again!", "Whoops, I got mixed up. Let's try again!"];
+      status(msg); line(name, said);
       return;
     }
     remember(q, answer);
-    status("Pip says:");
+    status("Steve says:");
     answerEl.textContent = answer; answerEl.hidden = false; againBtn.hidden = false;
     speak(answer);
   }
 
   if (document.body) build(); else document.addEventListener("DOMContentLoaded", build);
-  // On the home page, quietly download Pip's voice ahead of time so it is ready in the lessons.
+  // On the home page, quietly download Steve's voice ahead of time so it is ready in the lessons.
   if (page === "home" && !(navigator.connection && navigator.connection.saveData)) {
     addEventListener("load", () => setTimeout(() => startWorker("prefetch"), 4000));
   }
