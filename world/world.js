@@ -18,9 +18,12 @@
 
   function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+  // `then` runs when the line ends, or right away if it can't play; never for a line cut off by the next one.
+  let sayTok = 0;
   function say(src, then) {
     spoke = true;
-    try { voice.onended = then || null; voice.src = src; voice.currentTime = 0; voice.play().catch(() => {}); } catch (e) {}
+    const tok = ++sayTok, fin = () => { if (tok === sayTok && then) { sayTok++; then(); } };
+    try { voice.onended = fin; voice.onerror = fin; voice.src = src; voice.currentTime = 0; voice.play().catch(fin); } catch (e) { fin(); }
   }
   const line = (name, then) => say("../world/voice/" + name + ".mp3", then);
   const own = (name, then) => say("audio/" + name + ".mp3", then);
@@ -256,7 +259,10 @@
     };
   }
   // ---- worksheet ----
-  let sheetEl, boxes = [], sel = null, maybe = null;
+  // The app picks each box in order (top, bottom, answer; left to right; row by row). One tap on a number answers.
+  // Three tries: wrong numbers go red, the right one green. After three misses the answer goes in (green with a
+  // red border) and a narrated explanation (pNN/audio/ws-x-<box id>.mp3) says how to get it.
+  let sheetEl, boxes = [], sel = null, lock = false;
   function boxList() {
     const out = [];
     CFG.sheet.printed.forEach((row, r) => row.forEach((pr, c) => {
@@ -267,7 +273,7 @@
     }));
     return out;
   }
-  const bs = id => st.sheet[id] || (st.sheet[id] = { tries: 0, ok: false, shown: false, last: null });
+  const bs = id => { const s = st.sheet[id] || (st.sheet[id] = { tries: 0, ok: false, shown: false, last: null }); s.wrong = s.wrong || []; return s; };
   const finished = b => bs(b.id).ok || bs(b.id).shown;
 
   function openSheet() {
@@ -283,7 +289,8 @@
     sheetEl.querySelector(".paper").animate([{ transform: "scale(.2)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 480, easing: "cubic-bezier(.2,.8,.2,1)" });
     sfx.grow();
     if (boxes.every(finished)) { showDone(false); return; }
-    line("ws-intro", () => { if (!sel) selectBox(boxes.find(b => !finished(b))); });
+    lock = false; sel = boxes.find(b => !finished(b)); renderSheet();
+    line("ws-intro", () => { if (sel) selectBox(sel); });
   }
   function buildSheet() {
     boxes = boxList();
@@ -293,7 +300,7 @@
     head.appendChild(el("h2", "", `${CFG.sheet.title} (page ${CFG.page})`));
     const hear = el("button", "hear"); hear.type = "button";
     hear.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 9v6h4l5 4V5L8 9H4z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M16 8.5a5 5 0 010 7M18.5 6a8.5 8.5 0 010 12"/></svg>Hear it';
-    hear.onclick = () => line("ws-intro");
+    hear.onclick = () => { if (sel && !lock) sel.say(); else if (!sel) line("ws-intro"); };
     const back = el("button", "hear back"); back.type = "button"; back.setAttribute("aria-label", "Back to the path");
     back.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Path';
     back.onclick = closeSheet;
@@ -307,7 +314,8 @@
           if (val != null) return el("span", "n", val);
           const bx = boxes.find(b => b.id === `${r}-${c}-${part}`);
           const btn = el("button", "box"); btn.type = "button"; btn.setAttribute("aria-label", "Answer box");
-          btn.onclick = () => { if (!finished(bx)) selectBox(bx); else bx.say(); };
+          // boxes aren't picked by tapping: the current one repeats its question, a revealed one its explanation
+          btn.onclick = () => { if (lock) return; if (bx === sel) bx.say(); else if (bs(bx.id).shown) explain(bx); };
           bx.el = btn; return btn;
         };
         f.appendChild(cell("t", pr[0]));
@@ -335,46 +343,51 @@
     boxes.forEach(b => {
       const s = bs(b.id), e = b.el;
       e.className = "box" + (s.ok ? " good" : s.shown ? " shown" : s.last != null ? " bad" : "") + (sel === b ? " sel" : "");
-      e.textContent = s.ok || s.shown ? b.ans : sel === b && maybe != null ? maybe : s.last != null ? s.last : "";
-      if (sel === b && maybe != null && !s.ok) e.classList.add("maybe"), e.classList.remove("bad");
+      e.textContent = s.ok || s.shown ? b.ans : s.last != null ? s.last : "";
     });
-    sheetEl.querySelectorAll(".key").forEach(k => { k.classList.toggle("maybe", +k.dataset.n === maybe); k.disabled = !sel; });
+    const tried = sel ? bs(sel.id).wrong : [];
+    sheetEl.querySelectorAll(".key").forEach(k => {
+      const n = +k.dataset.n;
+      k.classList.toggle("bad", tried.includes(n));
+      k.disabled = !sel || lock || tried.includes(n);
+    });
   }
   function selectBox(b) {
     if (!b) return;
-    sel = b; maybe = null; renderSheet();
+    sel = b; renderSheet();
     b.el.scrollIntoView({ block: "nearest", behavior: "smooth" });
     b.say();
   }
+  const explain = (b, then) => own("ws-x-" + b.id, then);
   function tapKey(n, key) {
-    if (!sel || finished(sel)) return;
-    if (maybe !== n) { maybe = n; renderSheet(); line("num" + n); return; }
+    if (!sel || lock || finished(sel)) return;
     const b = sel, s = bs(b.id);
-    s.tries++; maybe = null;
+    if (s.wrong.includes(n)) return;
+    s.tries++;
+    b.el.classList.remove("shake"); void b.el.offsetWidth;
     if (n === b.ans) {
-      s.ok = true; s.last = null; save(); sel = null; renderSheet();
-      sfx.chime(); line("ws-right" + (1 + boxes.filter(x => bs(x.id).ok).length % 3));
-      flyCoin(b.el);
-      reportSheet();
-      setTimeout(() => nextBox(b), 1500);
+      s.ok = true; s.last = null; save(); lock = true; renderSheet();
+      key.classList.add("good");
+      sfx.chime(); flyCoin(b.el); reportSheet();
+      line("ws-right" + (1 + boxes.filter(x => bs(x.id).ok).length % 3), () => { key.classList.remove("good"); nextBox(); });
     } else {
-      s.last = n;
+      s.wrong.push(n); s.last = n;
       sfx.buzz();
-      b.el.classList.remove("shake"); void b.el.offsetWidth;
       if (s.tries >= 3) {
-        s.shown = true; save(); sel = null; renderSheet(); line("ws-reveal"); reportSheet();
-        setTimeout(() => nextBox(b), 3400);
+        s.shown = true; s.last = null; save(); lock = true; renderSheet(); reportSheet();
+        b.el.classList.add("shake");
+        setTimeout(() => { if (lock && !sheetEl.hidden) explain(b, nextBox); }, 700);
       } else {
         save(); renderSheet(); b.el.classList.add("shake"); line(s.tries === 1 ? "ws-wrong1" : "ws-wrong2");
       }
     }
   }
-  function closeSheet() { voice.pause(); sel = null; maybe = null; sheetEl.hidden = true; busy = false; renderSigns(); }
-  function nextBox(after) {
-    if (sel || sheetEl.hidden) return;
-    const i = boxes.indexOf(after);
-    const next = boxes.slice(i + 1).concat(boxes.slice(0, i)).find(b => !finished(b));
-    if (next) selectBox(next); else showDone(true);
+  function closeSheet() { voice.pause(); sayTok++; sel = null; lock = false; sheetEl.hidden = true; busy = false; renderSigns(); }
+  function nextBox() {
+    if (sheetEl.hidden) return;
+    lock = false;
+    const next = boxes.find(b => !finished(b));
+    if (next) selectBox(next); else { sel = null; renderSheet(); showDone(true); }
   }
   function flyCoin(fromEl) {
     const c = el("span", "coin"); const r = fromEl.getBoundingClientRect();

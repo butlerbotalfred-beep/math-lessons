@@ -103,16 +103,17 @@ body::before { display: none; }
 .box { grid-column: 2; width: 58px; height: 42px; margin: 1px 0; border-radius: 8px; border: 3px solid #334155; background: #e0f2fe; padding: 0;
   font: 600 30px/1 "Fredoka", sans-serif; color: #1d1647; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .box.sel { border-color: #6a35d6; box-shadow: 0 0 0 5px #ffe14d; background: #fffbe0; }
-.box.maybe { color: #8a84b5; }
 .box.bad { color: #d92d2d; border-color: #d92d2d; background: #ffe1e1; }
 .box.good { color: #1f9a3f; border-color: #1f9a3f; background: #dcf8df; cursor: default; }
-.box.shown { color: #8a8a8a; border-color: #b5b5b5; background: #f1f1f1; cursor: default; }
+.box.shown { color: #1f9a3f; border-color: #d92d2d; background: #dcf8df; }
 .box.shake { animation: shake .4s; }
 .pad { flex: none; display: grid; grid-template-columns: repeat(11, minmax(0, 1fr)); gap: 8px; padding-top: 4px; }
 .key { min-height: 64px; border-radius: 16px; border: 3px solid #d9cbff; background: #f1eaff; color: #3b1d86; box-shadow: 0 5px 0 #c4b2f5;
   font: 400 36px "Lilita One", sans-serif; cursor: pointer; padding: 0; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-.key.maybe { border-color: #6a35d6; background: #ffe14d; box-shadow: 0 5px 0 #b8960b; }
+.key.bad { color: #d92d2d; border-color: #d92d2d; background: #ffe1e1; box-shadow: 0 5px 0 #f0a3a3; }
+.key.good { color: #fff; border-color: #1f9a3f; background: #34c759; box-shadow: 0 5px 0 #1f7a35; }
 .key:disabled { opacity: .4; }
+.key.bad:disabled, .key.good:disabled { opacity: 1; }
 .donebox { flex: none; display: grid; justify-items: center; gap: 10px; padding: 10px; text-align: center; }
 .donebox[hidden] { display: none; }
 .donebox .big { font: 400 56px "Lilita One", sans-serif; color: #3b1d86; display: flex; align-items: center; gap: 12px; }
