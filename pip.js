@@ -50,7 +50,7 @@
   function status(t) { statusEl.textContent = t; }
 
   // ---- Steve's voice ----
-  // The same Kokoro "am_puck" voice as the lesson videos, made right on the iPad by voice/pip-voice-worker.js.
+  // The same Kokoro voice (a michael and puck mix) as the lesson videos, made right on the iPad by voice/pip-voice-worker.js.
   // The first time, the voice (about 110 MB) downloads and is kept in the browser's cache. Until it is ready,
   // or if it can't run, Steve falls back to the iPad's built-in voice.
   const VOICE_DIR = BASE + "voice/";
@@ -217,6 +217,24 @@
     const h = history().concat([{ role: "user", text: q }, { role: "assistant", text: a }]).slice(-6);
     try { sessionStorage.setItem(HKEY, JSON.stringify(h)); } catch (e) {}
   }
+  // Color chips have no text; name their color from its hue.
+  function colorName(x) {
+    const m = getComputedStyle(x).backgroundColor.match(/\d+/g); if (!m) return "";
+    const [r, g, b] = m.map(Number), max = Math.max(r, g, b), min = Math.min(r, g, b);
+    if (max - min < 30) return max > 200 ? "white" : max < 60 ? "black" : "gray";
+    let h = max === r ? (g - b) / (max - min) : max === g ? 2 + (b - r) / (max - min) : 4 + (r - g) / (max - min);
+    h = (h * 60 + 360) % 360;
+    return (h < 15 || h >= 335 ? "red" : h < 40 ? "orange" : h < 70 ? "yellow" : h < 170 ? "green" : h < 255 ? "blue" : h < 300 ? "purple" : "pink") + " square";
+  }
+  // What Joshua is looking at, so "explain the question" means the question on screen.
+  function onScreen() {
+    const card = document.querySelector("#quiz:not([hidden]) .card");
+    if (!card) return "";
+    const chips = [...card.querySelectorAll(".visual > *")].map(x => x.textContent.trim() || colorName(x)).filter(Boolean);
+    const prompt = (card.querySelector(".prompt") || {}).textContent || "";
+    const opts = [...card.querySelectorAll(".opt")].map(o => o.textContent.trim() + (o.classList.contains("wrong") ? " (already tried, not right)" : ""));
+    return [chips.length ? "Shown: " + chips.join(", ") : "", "Question: " + prompt, opts.length ? "Answer choices: " + opts.join(" | ") : ""].filter(Boolean).join("\n").slice(0, 600);
+  }
   async function ask(q) {
     busy = true; talkBtn.disabled = true;
     status("Steve is thinking…");
@@ -226,7 +244,7 @@
       const r = await fetch(ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + ANON, "apikey": ANON },
-        body: JSON.stringify({ page, question: q, history: history() }),
+        body: JSON.stringify({ page, question: q, history: history(), screen: onScreen() }),
       });
       const data = await r.json().catch(() => ({}));
       if (r.ok && data.answer) answer = data.answer; else err = data.error || r.status;
@@ -247,6 +265,9 @@
   }
 
   if (document.body) build(); else document.addEventListener("DOMContentLoaded", build);
+  // Let the pages run cross-origin isolated (see coi-sw.js) so Steve's voice can use several cores.
+  // It takes effect from the next page load; until then the voice just runs on one core.
+  try { if ("serviceWorker" in navigator && !window.crossOriginIsolated) navigator.serviceWorker.register(BASE + "coi-sw.js", { scope: BASE }).catch(() => {}); } catch (e) {}
   // On the home page, quietly download Steve's voice ahead of time so it is ready in the lessons.
   if (page === "home" && !(navigator.connection && navigator.connection.saveData)) {
     addEventListener("load", () => setTimeout(() => startWorker("prefetch"), 4000));

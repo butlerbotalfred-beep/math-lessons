@@ -20,8 +20,39 @@
       if (right === total) r.sheetDone = true;
       write(r);
     },
-    opened() { const r = read(); r.opened = true; write(r); }
+    opened() { const r = read(); r.opened = true; write(r); },
+    // Answers are read out one at a time: the first tap on an answer reads it and highlights it,
+    // a second tap on the same answer chooses it. Call after the .opt buttons for question qid are in place.
+    confirmChoices(card, qid) {
+      if (!card || card.dataset.confirm) return;
+      card.dataset.confirm = qid;
+      card.addEventListener("click", e => {
+        const b = e.target.closest(".opt");
+        if (!b || !card.contains(b) || b.disabled || b.classList.contains("right") || b.classList.contains("wrong")) return;
+        if (b.classList.contains("armed")) { b.classList.remove("armed"); return; } // second tap: let the lesson score it
+        e.stopImmediatePropagation(); e.preventDefault();
+        card.querySelectorAll(".opt.armed").forEach(o => o.classList.remove("armed"));
+        b.classList.add("armed");
+        const i = [...card.querySelectorAll(".opt")].indexOf(b);
+        play("audio/" + qid + "-o" + i + ".mp3");
+      }, true);
+    }
   };
+  function play(src) {
+    const a = document.getElementById("voice"); if (!a) return;
+    try { a.src = src; a.currentTime = 0; a.play().catch(() => {}); } catch (e) {}
+  }
+  // The lesson pages draw each question into #quiz; hook every new question card up as it appears.
+  function watchQuiz() {
+    const quiz = document.getElementById("quiz"); if (!quiz) return;
+    new MutationObserver(() => {
+      const card = quiz.querySelector(".card"); if (!card || !card.querySelector(".opt")) return;
+      let qid = null;
+      try { qid = QUIZ.questions[active].id; } catch (e) {}
+      if (qid) LessonApp.confirmChoices(card, qid);
+    }).observe(quiz, { childList: true });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", watchQuiz); else watchQuiz();
   LessonApp.opened();
 
   // Home bar at the top of each lesson

@@ -57,11 +57,13 @@ Deno.serve(async (req) => {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
   if (limited(ip)) return json({ error: "rate_limited" }, 429, origin);
 
-  let body: { page?: string; question?: string; history?: { role: string; text: string }[] };
+  let body: { page?: string; question?: string; screen?: string; history?: { role: string; text: string }[] };
   try { body = await req.json(); } catch { return json({ error: "bad_json" }, 400, origin); }
   const question = String(body.question || "").trim().slice(0, 400);
   if (!question) return json({ error: "empty" }, 400, origin);
   const lesson = LESSONS[String(body.page)] || "General first-grade addition practice.";
+  // The quiz question on his screen right now, if any, so "explain the question" means this one.
+  const screen = String(body.screen || "").slice(0, 600);
 
   // Up to 3 earlier exchanges, so "what about the next one?" makes sense.
   const history = (Array.isArray(body.history) ? body.history : []).slice(-6)
@@ -75,7 +77,9 @@ Deno.serve(async (req) => {
       model: "claude-haiku-5-5",
       max_tokens: 2000,
       output_config: { effort: "low" },
-      system: `${RULES}\n\nToday's lesson: ${lesson}`,
+      system: `${RULES}\n\nToday's lesson: ${lesson}` + (screen
+        ? `\n\nOn his screen right now is this quiz question. When he says "this question" or "explain the question", he means it. Help him think it through, but don't tell him which answer is right:\n${screen}`
+        : ""),
       messages: [...history, { role: "user", content: question }],
     });
     if (response.stop_reason === "refusal") {

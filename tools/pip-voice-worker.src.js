@@ -1,4 +1,4 @@
-// Steve's video voice (Kokoro, "am_puck") running on the iPad itself.
+// Steve's video voice (Kokoro: 60% "am_michael" + 40% "am_puck", in steve.bin) running on the iPad itself.
 // Turns text into 24 kHz audio, one sentence at a time, the same way the lesson videos were voiced.
 import * as ort from "onnxruntime-web/wasm";
 import { phonemize as espeak } from "phonemizer";
@@ -6,10 +6,11 @@ import VOCAB from "./vocab.json";
 
 const BASE = new URL("./", self.location.href).href;
 const MODEL_URL = BASE + "kokoro-int8.onnx";
-const VOICE_URL = BASE + "am_puck.bin";
+const VOICE_URL = BASE + "steve.bin";
 const CACHE = "pip-voice-v1";
 ort.env.wasm.wasmPaths = BASE;
-ort.env.wasm.numThreads = 1;
+// Several cores when the page is cross-origin isolated (coi-sw.js), otherwise one.
+ort.env.wasm.numThreads = self.crossOriginIsolated ? Math.max(1, Math.min(4, (navigator.hardwareConcurrency || 2) - 1)) : 1;
 
 let session = null, voice = null, loading = null;
 
