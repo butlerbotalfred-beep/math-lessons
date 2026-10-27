@@ -76,7 +76,8 @@
     steve.style.left = steveX(i) + "px";
   }
   function sizeScreen() {
-    const w = Math.min(innerWidth - 32, (innerHeight - 120) * 16 / 9);
+    // between the All lessons bar and the Ask Steve button, so neither is covered
+    const w = Math.min(innerWidth - 32, (innerHeight - 200) * 16 / 9);
     screen.style.setProperty("--sw", w + "px");
   }
 
@@ -151,7 +152,17 @@
     world.style.setProperty("--walk", dur + "s");
     steve.classList.add("walking");
     st.pos = i; save(); place(i);
-    await wait(dur * 1000);
+    // pick up the coins Steve walks over
+    const t0 = performance.now();
+    await new Promise(res => {
+      const step = () => {
+        const sx = steve.getBoundingClientRect(), mid = sx.left + sx.width * 0.6;
+        ground = ground.filter(c => { if (c.getBoundingClientRect().left + 37 > mid) return true; collect(c); return false; });
+        if (performance.now() - t0 < dur * 1000) requestAnimationFrame(step); else res();
+      };
+      requestAnimationFrame(step);
+    });
+    ground.forEach(c => collect(c)); ground = [];
     steve.classList.remove("walking");
     await wait(300);
     busy = false;
@@ -260,27 +271,31 @@
   }
 
   // ---- coins ----
+  // Coins pop out of the sign and land on the path ahead; Steve picks them up as he walks to the next sign.
+  let ground = [];
   async function finishStop(i, pts) {
     seg = null;
     await closeClip(i);
     renderSigns();
     const b = signs[i];
     const bx = signX(i), by = b.offsetTop + 30;
-    const coins = [];
+    const y = steve.offsetTop + steve.offsetHeight * 0.45;
+    const x0 = signX(i) + 130, x1 = steveX(i + 1) - 40;
     for (let k = 0; k < pts; k++) {
       b.classList.remove("bump"); void b.offsetWidth; b.classList.add("bump"); sfx.coin();
-      const c = el("button", "coin"); c.type = "button"; c.setAttribute("aria-label", "Coin");
-      const dx = (k - (pts - 1) / 2) * 96, dy = -120 - (pts > 1 ? 24 * Math.cos(((k - (pts - 1) / 2) / pts) * Math.PI) : 0);
+      const c = el("span", "coin"); c.setAttribute("aria-hidden", "true");
+      const x = pts === 1 ? (x0 + x1) / 2 : x0 + (x1 - x0) * k / (pts - 1);
+      const dx = x - bx, dy = y - by;
       c.style.left = bx + "px"; c.style.top = by + "px";
-      track.appendChild(c); coins.push(c);
-      const a = c.animate([{ transform: "translate(0, 40px) scale(.3)", opacity: 0 }, { transform: `translate(${dx * 0.5}px, ${dy - 90}px) scale(1.15)`, opacity: 1, offset: 0.55 }, { transform: `translate(${dx}px, ${dy}px) scale(1)`, opacity: 1 }], { duration: 640, easing: "ease-out", fill: "forwards" });
-      a.onfinish = () => { c.style.left = bx + dx + "px"; c.style.top = by + dy + "px"; a.cancel(); c.classList.add("spin"); };
-      let got = false;
-      c.onclick = () => { if (got) return; got = true; collect(c, () => { if (coins.every(x => !x.isConnected)) stopDone(i); }); };
+      track.appendChild(c); ground.push(c);
+      const a = c.animate([{ transform: "translate(0, 40px) scale(.3)", opacity: 0 }, { transform: `translate(${dx * 0.5}px, ${Math.min(0, dy) - 170}px) scale(1.15)`, opacity: 1, offset: 0.5 }, { transform: `translate(${dx}px, ${dy}px) scale(1)`, opacity: 1 }], { duration: 760, easing: "ease-in-out", fill: "forwards" });
+      a.onfinish = () => { c.style.left = x + "px"; c.style.top = y + "px"; a.cancel(); c.classList.add("spin"); };
       await wait(380);
     }
+    await wait(500);
     b.classList.remove("bump");
-    line("coins");
+    busy = false; renderSigns();
+    line(i + 1 === N ? "coins-sheet" : "coins-walk");
   }
   function collect(c, then) {
     const r = c.getBoundingClientRect(), p = purse.querySelector(".coin").getBoundingClientRect();
@@ -294,11 +309,6 @@
       if (then) then();
     };
   }
-  function stopDone(i) {
-    busy = false; renderSigns();
-    setTimeout(() => line(i + 1 === N ? "tosheet" : "next"), 400);
-  }
-
   // ---- worksheet ----
   let sheetEl, boxes = [], sel = null, maybe = null;
   function boxList() {
