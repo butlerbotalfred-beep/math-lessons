@@ -25,3 +25,4 @@
 @keyframes pip-pulse { 50% { transform: scale(1.03); } }
 @media (prefers-reduced-motion: reduce) { .pip-talk.on { animation: none; } }
 @media (max-width: 520px) { .pip-fab span { display: none; } .pip-fab { padding: 8px; } }
+.pip-load { margin: 0; color: var(--muted); font: 500 16px var(--display); font-variant-numeric: tabular-nums; }
