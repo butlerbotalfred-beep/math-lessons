@@ -10,7 +10,7 @@ const VOICE_URL = BASE + "steve.bin";
 const CACHE = "pip-voice-v1";
 ort.env.wasm.wasmPaths = BASE;
 // Several cores when the page is cross-origin isolated (coi-sw.js), otherwise one.
-ort.env.wasm.numThreads = self.crossOriginIsolated ? Math.max(1, Math.min(4, (navigator.hardwareConcurrency || 2) - 1)) : 1;
+ort.env.wasm.numThreads = self.crossOriginIsolated ? Math.max(1, Math.min(6, (navigator.hardwareConcurrency || 2) - 1)) : 1;
 
 let session = null, voice = null, loading = null;
 
@@ -36,6 +36,8 @@ function load() {
     ]);
     voice = new Float32Array(v.buffer, v.byteOffset, v.byteLength / 4);
     session = await ort.InferenceSession.create(model, { executionProviders: ["wasm"] });
+    // The very first run is much slower than later ones, so do it now instead of on Steve's first answer.
+    try { await speakSentence("Hi! I'm Steve, and I'm ready to help.", 0.9); } catch (e) {}
     postMessage({ type: "ready" });
   })();
 }

@@ -108,9 +108,15 @@
     src.start(at); nextAt = at + buf.duration + (buf.gap != null ? buf.gap : 0.15);
     sources.push(src);
   }
-  // Start talking only once enough is ready that Steve won't stall between sentences,
-  // judged from how fast this iPad has been making speech so far.
+  // Start talking once enough is ready that Steve won't stall between sentences, judged from how fast
+  // this device has been making speech so far, but never hold the first sentence back more than about half a second:
+  // a slightly longer pause between sentences is better than a long silence before he starts.
+  let firstAt = 0, holdTimer = null;
   function flush(all) {
+    if (!started && pending.length && !firstAt) {
+      firstAt = performance.now(); const id = speakId;
+      clearTimeout(holdTimer); holdTimer = setTimeout(() => { if (id === speakId && !started) flush(true); }, 600);
+    }
     if (!started && !all && plan) {
       const left = plan.reduce((a, b) => a + b, 0) - madeChars;
       const stillToMake = left * (madeSec / Math.max(madeChars, 1)) * (madeMs / 1000 / Math.max(madeSec, 0.01));
@@ -128,7 +134,7 @@
   }
   function speak(text) {
     hush(); lastText = text; lastChunks = [];
-    plan = null; pending = []; started = false; madeMs = 0; madeSec = 0; madeChars = 0;
+    plan = null; pending = []; started = false; madeMs = 0; madeSec = 0; madeChars = 0; firstAt = 0; clearTimeout(holdTimer);
     if (voiceState === "ready") { worker.postMessage({ type: "speak", id: speakId, text }); return; }
     if (voiceState === "loading") {
       // Wait a little for the video voice; if it takes too long, use the built-in voice this time.
@@ -267,10 +273,23 @@
   if (document.body) build(); else document.addEventListener("DOMContentLoaded", build);
   // Let the pages run cross-origin isolated (see coi-sw.js) so Steve's voice can use several cores.
   // It takes effect from the next page load; until then the voice just runs on one core.
-  try { if ("serviceWorker" in navigator && !window.crossOriginIsolated) navigator.serviceWorker.register(BASE + "coi-sw.js", { scope: BASE }).catch(() => {}); } catch (e) {}
-  // On the home page, quietly download Steve's voice ahead of time so it is ready in the lessons.
-  if (page === "home" && !(navigator.connection && navigator.connection.saveData)) {
-    addEventListener("load", () => setTimeout(() => startWorker("prefetch"), 4000));
+  // The first time, reload once as soon as it is installed (before anything has been tapped), so it works right away.
+  let tapped = false;
+  addEventListener("pointerdown", () => { tapped = true; }, { capture: true, once: true });
+  try {
+    if ("serviceWorker" in navigator && !window.crossOriginIsolated) {
+      const sw = navigator.serviceWorker, fresh = !sw.controller;
+      sw.register(BASE + "coi-sw.js", { scope: BASE }).catch(() => {});
+      sw.addEventListener("controllerchange", () => {
+        let again = false; try { again = sessionStorage.getItem("coi-reloaded"); sessionStorage.setItem("coi-reloaded", "1"); } catch (e) {}
+        if (fresh && !tapped && !again) location.reload();
+      });
+    }
+  } catch (e) {}
+  // A few seconds after the page opens, quietly get Steve's voice ready (downloading it the first time),
+  // so his first answer doesn't wait for it to start up.
+  if (!(navigator.connection && navigator.connection.saveData)) {
+    addEventListener("load", () => setTimeout(() => startWorker("load"), 3000));
   }
   try { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => {}; } catch (e) {}
 })();
