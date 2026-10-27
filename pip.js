@@ -56,6 +56,8 @@
   const VOICE_DIR = BASE + "voice/";
   let worker = null, voiceState = "off", ctx = null, nextAt = 0, speakId = 0, sources = [];
   let lastText = "", lastChunks = [], waiting = null, waitTimer = null;
+  // While an answer is being voiced: pieces waiting to play, and how fast this device makes speech.
+  let plan = null, pending = [], started = false, madeMs = 0, madeSec = 0, madeChars = 0;
   const lineCache = {};
   function startWorker(kind) {
     if (voiceState === "failed") return;
@@ -78,10 +80,17 @@
     } else if (data.type === "ready") {
       voiceState = "ready"; loadEl.hidden = true;
       if (waiting) { const t = waiting; waiting = null; clearTimeout(waitTimer); speak(t); }
+    } else if (data.type === "plan" && data.id === speakId) {
+      plan = data.sizes;
     } else if (data.type === "audio" && data.id === speakId) {
       const buf = audioCtx().createBuffer(1, data.audio.length, 24000);
       buf.getChannelData(0).set(data.audio);
-      lastChunks.push(buf); playBuffer(buf);
+      buf.gap = data.gap; // the pause after this piece: longer after a sentence or colon
+      lastChunks.push(buf);
+      madeMs += data.ms; madeSec += buf.duration; madeChars += plan ? plan[lastChunks.length - 1] || 0 : 0;
+      pending.push(buf); flush(false);
+    } else if (data.type === "done" && data.id === speakId) {
+      flush(true);
     } else if (data.type === "error") {
       if (data.id === speakId) fallbackSpeak(lastText);
       if (voiceState !== "ready") voiceFailed();
@@ -96,8 +105,20 @@
     const c = audioCtx(), src = c.createBufferSource();
     src.buffer = buf; src.connect(c.destination);
     const at = Math.max(c.currentTime + 0.05, nextAt);
-    src.start(at); nextAt = at + buf.duration + 0.15;
+    src.start(at); nextAt = at + buf.duration + (buf.gap != null ? buf.gap : 0.15);
     sources.push(src);
+  }
+  // Start talking only once enough is ready that Steve won't stall between sentences,
+  // judged from how fast this iPad has been making speech so far.
+  function flush(all) {
+    if (!started && !all && plan) {
+      const left = plan.reduce((a, b) => a + b, 0) - madeChars;
+      const stillToMake = left * (madeSec / Math.max(madeChars, 1)) * (madeMs / 1000 / Math.max(madeSec, 0.01));
+      const ready = pending.reduce((a, b) => a + b.duration + (b.gap || 0), 0);
+      if (ready < stillToMake * 1.15) return;
+    }
+    started = true;
+    pending.forEach(playBuffer); pending = [];
   }
   function hush() {
     sources.forEach(s => { try { s.stop(); } catch (e) {} });
@@ -107,6 +128,7 @@
   }
   function speak(text) {
     hush(); lastText = text; lastChunks = [];
+    plan = null; pending = []; started = false; madeMs = 0; madeSec = 0; madeChars = 0;
     if (voiceState === "ready") { worker.postMessage({ type: "speak", id: speakId, text }); return; }
     if (voiceState === "loading") {
       // Wait a little for the video voice; if it takes too long, use the built-in voice this time.
@@ -142,9 +164,9 @@
   function fallbackSpeak(text) {
     try {
       speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
+      const u = new SpeechSynthesisUtterance(text.replace(/:\s*/g, ". "));
       const v = pipVoice(); if (v) u.voice = v;
-      u.lang = "en-US"; u.rate = 0.9; u.pitch = 1.15;
+      u.lang = "en-US"; u.rate = 0.85; u.pitch = 1.15;
       speechSynthesis.speak(u);
     } catch (e) {}
   }
