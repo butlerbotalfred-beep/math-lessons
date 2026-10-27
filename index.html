@@ -128,7 +128,7 @@ td.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
     <img class="steve" src="art/steve.webp" alt="" width="483" height="706">
   </header>
 
-  <a class="next" id="next" href="p45/index.html">
+  <a class="next" id="next" href="p45/world.html">
     <span class="thumb"><img id="next-art" src="art/p45.webp" alt="" width="960" height="540"><span class="pg" id="next-pg">Page 45</span></span>
     <span>
       <span class="eyebrow">Up next</span>
@@ -156,12 +156,14 @@ td.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
 <script>
 // Each lesson page saves its results under "mathapp:<page>" (see app.js).
 const LESSONS = [
-  { id: "p45", page: 45, title: "Patterns Don't Always Repeat!", q: 12, sheet: false, color: "--t45" },
+  { id: "p45", page: 45, title: "Patterns Don't Always Repeat!", q: 12, sheet: false, color: "--t45", world: true },
   { id: "p46", page: 46, title: "Make a Graph!", q: 11, sheet: true, color: "--t46" },
   { id: "p47", page: 47, title: "Review Day: Sums of 5", q: 10, sheet: true, color: "--t47" },
   { id: "p48", page: 48, title: "Domino Facts and Turnarounds", q: 10, sheet: true, color: "--t48" },
   { id: "p49", page: 49, title: "Draw Circles to Show Addition!", q: 9, sheet: true, color: "--t49" },
 ];
+// lessons with a walkable world open there; the plain video page stays at pNN/index.html
+function page(L) { return L.id + (L.world ? "/world.html" : "/index.html"); }
 function rec(id) { try { return JSON.parse(localStorage.getItem("mathapp:" + id) || "{}") || {}; } catch (e) { return {}; } }
 function starCount(best, max) { const p = best / max; return p >= 0.9 ? 3 : p >= 0.7 ? 2 : 1; }
 function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
@@ -180,7 +182,7 @@ function render() {
   LESSONS.forEach(L => {
     const r = rec(L.id), max = L.q * 4;
     if (!nextL && !finished(L, r)) nextL = L;
-    const a = el("a", "card"); a.href = L.id + "/index.html"; a.id = "lesson-" + L.id;
+    const a = el("a", "card"); a.href = page(L); a.id = "lesson-" + L.id;
     a.style.setProperty("--c", `var(${L.color})`);
     const img = el("img", "art"); img.src = `art/${L.id}.webp`; img.alt = ""; img.width = 960; img.height = 540; img.loading = "lazy";
     a.appendChild(img);
@@ -218,7 +220,7 @@ function render() {
   const next = document.getElementById("next");
   if (nextL) {
     const r = rec(nextL.id);
-    next.href = nextL.id + "/index.html";
+    next.href = page(nextL);
     document.getElementById("next-art").src = `art/${nextL.id}.webp`;
     document.getElementById("next-pg").textContent = "Page " + nextL.page;
     document.getElementById("next-title").textContent = nextL.title;
