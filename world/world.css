@@ -1,5 +1,5 @@
-/* Walkable lesson world: a side-on blocky path with a signpost per sub-lesson, Steve walking between them,
-   clips that grow out of a sign and shrink back into it, coins, and the interactive worksheet at the end. */
+/* Walkable lesson world: the 3D path (drawn by view3d.js), the Walk button, the coin counter, clips that grow out of a
+   sign and shrink back into it, and the interactive worksheet at the end. */
 [hidden] { display: none !important; }
 html, body { margin: 0; height: 100%; overflow: hidden; overscroll-behavior: none; }
 body { font-family: "Fredoka", "Trebuchet MS", system-ui, sans-serif; color: #1d1647; -webkit-user-select: none; user-select: none; }
@@ -7,56 +7,15 @@ body::before { display: none; }
 .appbar { position: fixed; top: env(safe-area-inset-top, 0px); left: 0; z-index: 30; }
 
 #world { position: fixed; inset: 0; overflow: hidden; background: #6fb7ee; }
-.sky { position: absolute; inset: -2% -10% 0 -10%; background: url("../art/bg.jpg") center 30% / cover no-repeat; will-change: transform;
-  transition: transform var(--walk, 0s) linear; }
-.track { position: absolute; left: 0; top: 0; bottom: 0; will-change: transform; transition: transform var(--walk, 0s) linear; }
-.ground { position: absolute; left: -400px; right: -400px; bottom: 0; height: var(--gh);
-  background:
-    linear-gradient(#5cc542 0 26%, #3f9a2e 26% 32%, transparent 32%),
-    repeating-linear-gradient(90deg, transparent 0 62px, rgba(0,0,0,.14) 62px 64px),
-    repeating-linear-gradient(180deg, transparent 0 62px, rgba(0,0,0,.12) 62px 64px),
-    linear-gradient(#9a6434, #7a4b22);
-  box-shadow: inset 0 6px 0 #8be06a; }
-.ground::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 12px;
-  background: repeating-linear-gradient(90deg, #6fd64f 0 20px, #4fb53a 20px 40px, #7ee05e 40px 52px, #48a934 52px 64px); }
-.path { position: absolute; left: -400px; right: -400px; bottom: calc(var(--gh) - 34px); height: 22px;
-  background: repeating-linear-gradient(90deg, #d8b679 0 30px, #c7a265 30px 32px); border-radius: 4px; opacity: .9; }
+.world3d { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
 
-/* Signposts */
-.sign { position: absolute; bottom: calc(var(--gh) - 30px); width: 170px; margin-left: -85px; height: 250px; padding: 0; border: 0;
-  background: none; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; font: inherit; color: inherit; }
-.sign .post { position: absolute; left: 50%; bottom: 0; width: 26px; height: 150px; margin-left: -13px; border: 4px solid #5e3413;
-  background: linear-gradient(90deg, #c98042, #a8642c); }
-.sign .board { position: absolute; left: 0; right: 0; top: 0; height: 120px; border-radius: 12px; border: 5px solid #5e3413;
-  background: repeating-linear-gradient(180deg, #c98042 0 34px, #a8642c 34px 37px, #c98042 37px 74px);
-  box-shadow: inset 0 -5px 0 rgba(0,0,0,.18), 0 7px 0 rgba(60, 30, 8, .55);
-  display: grid; place-items: center; color: #fff; font: 400 58px/1 "Lilita One", "Fredoka", sans-serif;
-  text-shadow: 0 3px 0 rgba(0,0,0,.45), 2px 0 0 #3a1f08, -2px 0 0 #3a1f08, 0 2px 0 #3a1f08, 0 -2px 0 #3a1f08; }
-.sign .board svg { width: 66px; height: 66px; }
-.sign.locked .board { filter: saturate(.35) brightness(.85); }
-.sign.locked { cursor: default; }
-.sign.done .board { background: repeating-linear-gradient(180deg, #e7b955 0 34px, #c9952f 34px 37px, #e7b955 37px 74px); }
-.sign .got { position: absolute; left: 50%; top: 128px; transform: translateX(-50%); white-space: nowrap; display: flex; gap: 3px;
-  padding: 4px 8px; border-radius: 999px; background: rgba(29, 22, 71, .78); }
-.sign .got i { width: 18px; height: 18px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff6b0, #ffd21f 45%, #e09b00); border: 2px solid #9a6400; }
-.sign.here .board { animation: hop 1.1s ease-in-out infinite; box-shadow: inset 0 -5px 0 rgba(0,0,0,.18), 0 7px 0 rgba(60, 30, 8, .55), 0 0 0 6px #ffe14d, 0 0 36px 10px rgba(255, 225, 77, .8); }
-.sign.here::after { content: ""; position: absolute; left: 50%; top: -64px; margin-left: -22px; width: 0; height: 0;
-  border: 22px solid transparent; border-top: 30px solid #ffe14d; filter: drop-shadow(0 3px 0 #a07a00); animation: bob .8s ease-in-out infinite; }
-.sign.bump .board { animation: bump .32s ease-out; }
-.sign.station { width: 230px; margin-left: -115px; height: 280px; }
-.sign.station .board { height: 150px; background: #fffef8; border-color: #3b1d86; color: #3b1d86; text-shadow: none;
-  font-size: 30px; grid-template-rows: auto auto; align-content: center; gap: 4px;
-  background-image: repeating-linear-gradient(180deg, transparent 0 28px, #bfdbfe 28px 30px); }
-.sign.station .post { height: 140px; }
-@keyframes hop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(12px); } }
-@keyframes bump { 0% { transform: translateY(0); } 35% { transform: translateY(-26px); } 100% { transform: translateY(0); } }
-
-/* Steve */
-.steve { position: absolute; bottom: calc(var(--gh) - 22px); height: min(30vh, 260px); margin-left: -80px; pointer-events: none;
-  transition: left var(--walk, 0s) linear; filter: drop-shadow(0 8px 6px rgba(0,0,0,.3)); }
-.steve.walking { animation: walk .36s ease-in-out infinite; }
-@keyframes walk { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-12px) rotate(2deg); } }
+/* Walk button: hold it and Steve walks to the next sign */
+.walkbtn { position: fixed; z-index: 30; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); width: 128px; height: 128px; margin-left: -64px;
+  border-radius: 50%; border: 6px solid #2b8a30; background: linear-gradient(#7be776, #44c24a); box-shadow: 0 8px 0 #23752a, 0 14px 26px rgba(0,0,0,.3);
+  cursor: pointer; touch-action: none; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; animation: pulse 1.4s ease-in-out infinite; }
+.walkbtn svg { width: 70px; height: 70px; fill: #0e3314; }
+.walkbtn.down { transform: translateY(6px); box-shadow: 0 2px 0 #23752a; animation: none; }
+@keyframes pulse { 0%, 100% { scale: 1; } 50% { scale: 1.08; } }
 
 /* Coin counter */
 .purse { position: fixed; z-index: 50; top: calc(12px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
@@ -75,9 +34,6 @@ body::before { display: none; }
   cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .coin::after { content: ""; position: absolute; left: 50%; top: 50%; width: 14px; height: 34px; margin: -17px 0 0 -7px; border-radius: 4px;
   background: #fff3a0; box-shadow: 0 0 0 3px #c98200; }
-.coin.spin { animation: spin 1.1s linear infinite; }
-.coin::before { content: ""; position: absolute; inset: -26px; border-radius: 50%; }
-@keyframes spin { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(.25); } }
 .fly { position: fixed; z-index: 60; pointer-events: none; }
 
 /* Clip screen */
@@ -166,4 +122,4 @@ body::before { display: none; }
   .fact { font-size: 26px; grid-template-columns: 20px 48px; } .box { width: 46px; height: 44px; font-size: 26px; } .fact .n { height: 44px; }
   .pad { grid-template-columns: repeat(6, minmax(0, 1fr)); } .key { min-height: 60px; font-size: 30px; }
 }
-@media (prefers-reduced-motion: reduce) { .steve.walking, .sign.here .board, .sign.here::after, .coin.spin { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .walkbtn { animation: none; } }

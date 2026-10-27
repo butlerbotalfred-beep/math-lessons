@@ -1,11 +1,12 @@
 // Walkable lesson world. The lesson's video is cut into one short clip per question, using the QUIZ cue times in the
 // lesson's own index.html, so a re-rendered video and its updated QUIZ need no change here. Each clip grows out of a
-// signpost, shrinks back into it after a right answer, and the sign pops out coins (4, 3, 2 or 1 by try). Joshua taps
-// the coins, then taps the next sign and Steve walks there. The last stop is the worksheet: one coin per right box.
+// signpost, shrinks back into it after a right answer, and the sign pops out coins (4, 3, 2 or 1 by try) onto the path.
+// Joshua holds the Walk button and Steve walks to the next sign, picking up the coins on the way. The world itself is
+// 3D (view3d.js). The last stop is the worksheet: one coin per right box.
 (function () {
   const CFG = window.WORLD;
   const KEY = "mathapp:" + CFG.id + ":world";
-  const SP = 560, X0 = 380;           // signpost spacing and first signpost, in track pixels
+  const VIEW = new URL("view3d.js", document.currentScript.src).href;
   // Our own audio element for spoken lines: app.js briefly plays and pauses #voice on the first tap to unlock it on
   // the iPad, which would cut off a line started by that same tap.
   const voice = new Audio(); voice.preload = "auto";
@@ -13,7 +14,7 @@
   const COLORS = { red: "#ef4444", blue: "#3b82f6", green: "#22c55e", yellow: "#facc15", purple: "#a855f7", orange: "#f97316" };
   const COIN = '<i></i>';
   let QUIZ, Q, N, st, busy = false, seg = null;
-  let world, track, sky, steve, purse, screen, v, quiz, bigplay, pausebtn, signs = [];
+  let world, view, walkbtn, purse, screen, v, quiz, bigplay, pausebtn;
 
   function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
@@ -63,18 +64,6 @@
   function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
 
   // ---- layout ----
-  const signX = i => X0 + i * SP;
-  const steveX = i => signX(i) - 170;
-  function camFor(i) {
-    const max = Math.max(0, signX(N) + 260 - innerWidth);
-    return Math.max(0, Math.min(max, steveX(i) - innerWidth * 0.18));
-  }
-  function place(i) {
-    const cam = camFor(i), max = Math.max(1, signX(N) + 260 - innerWidth);
-    track.style.transform = `translateX(${-cam}px)`;
-    sky.style.transform = `translateX(${-(cam / max) * innerWidth * 0.08}px)`;
-    steve.style.left = steveX(i) + "px";
-  }
   function sizeScreen() {
     // between the All lessons bar and the Ask Steve button, so neither is covered
     const w = Math.min(innerWidth - 32, (innerHeight - 200) * 16 / 9);
@@ -83,25 +72,16 @@
 
   function build() {
     world = document.getElementById("world");
-    world.style.setProperty("--gh", "max(150px, 24vh)");
-    sky = el("div", "sky"); track = el("div", "track");
-    track.style.width = signX(N) + 600 + "px";
-    track.appendChild(el("div", "ground")); track.appendChild(el("div", "path"));
-    for (let i = 0; i <= N; i++) {
-      const b = el("button", "sign" + (i === N ? " station" : "")); b.type = "button";
-      b.style.left = signX(i) + "px";
-      b.appendChild(el("span", "post"));
-      const board = el("span", "board");
-      if (i === N) { board.appendChild(el("span", "", "Worksheet")); board.appendChild(el("span", "", "★ ★ ★")); }
-      else board.textContent = i + 1;
-      b.appendChild(board);
-      b.setAttribute("aria-label", i === N ? "Worksheet" : `Part ${i + 1}`);
-      b.onclick = () => tapSign(i);
-      track.appendChild(b); signs.push(b);
-    }
-    steve = el("img", "steve"); steve.src = "../art/steve.webp"; steve.alt = "Steve";
-    track.appendChild(steve);
-    world.appendChild(sky); world.appendChild(track);
+    view.place(st.pos);
+    walkbtn = el("button", "walkbtn"); walkbtn.type = "button"; walkbtn.setAttribute("aria-label", "Walk");
+    walkbtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l7 8h-4.5v8h-5v-8H5z"/></svg>';
+    const hold = on => e => { e.preventDefault(); if (on && (busy || st.pos === st.at)) return; view.hold(on); walkbtn.classList.toggle("down", on); };
+    walkbtn.addEventListener("pointerdown", hold(true));
+    ["pointerup", "pointercancel", "pointerleave"].forEach(ev => walkbtn.addEventListener(ev, hold(false)));
+    walkbtn.addEventListener("contextmenu", e => e.preventDefault());
+    addEventListener("keydown", e => { if ((e.key === "ArrowUp" || e.key === " ") && !e.repeat && !busy && st.pos !== st.at) { view.hold(true); e.preventDefault(); } });
+    addEventListener("keyup", e => { if (e.key === "ArrowUp" || e.key === " ") view.hold(false); });
+    document.body.appendChild(walkbtn);
 
     purse = el("div", "purse"); purse.setAttribute("aria-live", "polite");
     purse.innerHTML = '<span class="coin" aria-hidden="true"></span><b>0</b>';
@@ -121,7 +101,7 @@
     screen.appendChild(stage);
     document.body.appendChild(screen);
     sizeScreen();
-    addEventListener("resize", () => { sizeScreen(); world.style.setProperty("--walk", "0s"); place(st.pos); });
+    addEventListener("resize", () => { sizeScreen(); view.resize(); });
   }
 
   function renderPurse(ping) {
@@ -129,49 +109,27 @@
     if (ping) { purse.classList.remove("ping"); void purse.offsetWidth; purse.classList.add("ping"); }
   }
   function renderSigns() {
-    signs.forEach((b, i) => {
-      const done = i < N ? st.pts[i] > 0 : false;
-      b.classList.toggle("done", done);
-      b.classList.toggle("locked", i > st.at);
-      b.classList.toggle("here", i === st.at && !busy);
-      let got = b.querySelector(".got");
-      if (done && !got) { got = el("span", "got"); got.innerHTML = COIN.repeat(st.pts[i]); b.appendChild(got); }
-    });
+    view.setSigns(st, busy);
+    if (st.at > st.pos) view.setTarget(st.at);
+    walkbtn.hidden = busy || st.at === st.pos;
   }
 
   // ---- moving between signs ----
+  // Tapping the sign ahead walks there too; arriving opens its clip (or the worksheet).
   function tapSign(i) {
     if (busy || i !== st.at) return;
-    if (st.pos !== i) walkTo(i);
+    if (st.pos !== i) view.walk();
     else if (i < N) openClip(i);
     else openSheet();
   }
-  async function walkTo(i) {
-    busy = true; renderSigns();
-    const dist = Math.abs(steveX(i) - steveX(st.pos)), dur = Math.max(1.2, Math.min(2.8, dist / 300));
-    world.style.setProperty("--walk", dur + "s");
-    steve.classList.add("walking");
-    st.pos = i; save(); place(i);
-    // pick up the coins Steve walks over
-    const t0 = performance.now();
-    await new Promise(res => {
-      const step = () => {
-        const sx = steve.getBoundingClientRect(), mid = sx.left + sx.width * 0.6;
-        ground = ground.filter(c => { if (c.getBoundingClientRect().left + 37 > mid) return true; collect(c); return false; });
-        if (performance.now() - t0 < dur * 1000) requestAnimationFrame(step); else res();
-      };
-      requestAnimationFrame(step);
-    });
-    ground.forEach(c => collect(c)); ground = [];
-    steve.classList.remove("walking");
-    await wait(300);
-    busy = false;
+  function arrive(i) {
+    st.pos = i; save(); walkbtn.classList.remove("down");
     if (i < N) openClip(i); else openSheet();
   }
 
   // ---- clip screen: grows out of a sign, shrinks back into it ----
   function fromSign(i, scale) {
-    const sr = signs[i].querySelector(".board").getBoundingClientRect(), fr = screen.getBoundingClientRect();
+    const sr = view.signRect(i), fr = screen.getBoundingClientRect();
     const s = scale == null ? sr.width / fr.width : scale;
     const dx = sr.left + sr.width / 2 - (fr.left + fr.width * s / 2), dy = sr.top + sr.height / 2 - (fr.top + fr.height * s / 2);
     return `translate(${dx}px, ${dy}px) scale(${s})`;
@@ -195,10 +153,11 @@
     screen.animate([{ transform: fromSign(i), opacity: 0.4 }, { transform: "none", opacity: 1 }], { duration: 560, easing: "cubic-bezier(.2,.8,.2,1)" });
     sfx.grow();
     v.play().catch(() => { bigplay.hidden = false; });
+    setTimeout(() => { if (!screen.hidden) view.pause(true); }, 700);   // the world doesn't need drawing behind the clip
   }
   function closeClip(i) {
     return new Promise(res => {
-      voice.pause(); v.pause(); sfx.shrink();
+      voice.pause(); v.pause(); sfx.shrink(); view.pause(false);
       const a = screen.animate([{ transform: "none", opacity: 1 }, { transform: fromSign(i, 0.02), opacity: 0.2 }], { duration: 620, easing: "cubic-bezier(.6,0,.9,.5)", fill: "forwards" });
       a.onfinish = () => { screen.hidden = true; a.cancel(); quiz.hidden = true; res(); };
     });
@@ -272,37 +231,24 @@
 
   // ---- coins ----
   // Coins pop out of the sign and land on the path ahead; Steve picks them up as he walks to the next sign.
-  let ground = [];
   async function finishStop(i, pts) {
     seg = null;
     await closeClip(i);
     renderSigns();
-    const b = signs[i];
-    const bx = signX(i), by = b.offsetTop + 30;
-    const y = steve.offsetTop + steve.offsetHeight * 0.45;
-    const x0 = signX(i) + 130, x1 = steveX(i + 1) - 40;
-    for (let k = 0; k < pts; k++) {
-      b.classList.remove("bump"); void b.offsetWidth; b.classList.add("bump"); sfx.coin();
-      const c = el("span", "coin"); c.setAttribute("aria-hidden", "true");
-      const x = pts === 1 ? (x0 + x1) / 2 : x0 + (x1 - x0) * k / (pts - 1);
-      const dx = x - bx, dy = y - by;
-      c.style.left = bx + "px"; c.style.top = by + "px";
-      track.appendChild(c); ground.push(c);
-      const a = c.animate([{ transform: "translate(0, 40px) scale(.3)", opacity: 0 }, { transform: `translate(${dx * 0.5}px, ${Math.min(0, dy) - 170}px) scale(1.15)`, opacity: 1, offset: 0.5 }, { transform: `translate(${dx}px, ${dy}px) scale(1)`, opacity: 1 }], { duration: 760, easing: "ease-in-out", fill: "forwards" });
-      a.onfinish = () => { c.style.left = x + "px"; c.style.top = y + "px"; a.cancel(); c.classList.add("spin"); };
-      await wait(380);
-    }
-    await wait(500);
-    b.classList.remove("bump");
+    const drops = [];
+    for (let k = 0; k < pts; k++) { view.bump(i); sfx.coin(); drops.push(view.dropCoin(i, k, pts)); await wait(380); }
+    await Promise.all(drops);
     busy = false; renderSigns();
     line(i + 1 === N ? "coins-sheet" : "coins-walk");
   }
+  // a coin flies from a screen point (or an element) to the coin counter
   function collect(c, then) {
-    const r = c.getBoundingClientRect(), p = purse.querySelector(".coin").getBoundingClientRect();
-    c.remove();
-    const f = el("span", "coin fly"); f.style.left = r.left + r.width / 2 + "px"; f.style.top = r.top + r.height / 2 + "px";
+    let x = c.x, y = c.y;
+    if (c instanceof Element) { const r = c.getBoundingClientRect(); x = r.left + r.width / 2; y = r.top + r.height / 2; c.remove(); }
+    const p = purse.querySelector(".coin").getBoundingClientRect();
+    const f = el("span", "coin fly"); f.style.left = x + "px"; f.style.top = y + "px";
     document.body.appendChild(f); sfx.coin();
-    const dx = p.left + p.width / 2 - (r.left + r.width / 2), dy = p.top + p.height / 2 - (r.top + r.height / 2);
+    const dx = p.left + p.width / 2 - x, dy = p.top + p.height / 2 - y;
     const a = f.animate([{ transform: "none" }, { transform: `translate(${dx * 0.4}px, ${dy * 0.4 - 80}px) scale(1.2)`, offset: 0.4 }, { transform: `translate(${dx}px, ${dy}px) scale(.55)` }], { duration: 650, easing: "ease-in" });
     a.onfinish = () => {
       f.remove(); st.coins++; if (st.pending > 0) st.pending--; save(); renderPurse(true);
@@ -461,11 +407,12 @@
     const ln = html.split("\n").find(l => l.startsWith("const QUIZ = "));
     return JSON.parse(ln.slice("const QUIZ = ".length).trim().replace(/;$/, ""));
   }
-  fetch(CFG.lesson || "index.html").then(r => r.text()).then(html => {
+  fetch(CFG.lesson || "index.html").then(r => r.text()).then(async html => {
     QUIZ = quizFrom(html); Q = QUIZ.questions; N = Q.length;
     st = load(); save();
+    const { createView } = await import(VIEW);
+    view = createView({ container: document.getElementById("world"), N, onTap: tapSign, onArrive: arrive, onPick: p => collect(p) });
     build(); renderPurse(); renderSigns();
-    world.style.setProperty("--walk", "0s"); place(st.pos);
     requestAnimationFrame(tick);
     v.addEventListener("ended", segEnd);
     // First tap on the page: greet (a tap is needed before the iPad plays sound). Runs after the tapped button's own
@@ -473,10 +420,10 @@
     // the voice is unlocked; otherwise a silent play unlocks it for lines said later without a tap.
     const greet = () => {
       removeEventListener("click", greet);
-      if (!busy) { line(st.at === 0 && st.pos === 0 ? "start" : st.pos !== st.at ? "next" : st.at === N ? "tosheet" : "arrive"); return; }
+      if (!busy) { line(st.at === 0 && st.pos === 0 ? "start" : st.pos !== st.at ? "hold-walk" : st.at === N ? "tosheet" : "arrive"); return; }
       if (!spoke) { voice.muted = true; voice.src = "../world/voice/arrive.mp3"; const p = voice.play(), done = () => { if (!spoke) voice.pause(); voice.muted = false; }; if (p && p.then) p.then(done, done); else done(); }
     };
     addEventListener("click", greet);
-    window.WorldDebug = { st: () => st, segEnd, finishStop, openSheet };
+    window.WorldDebug = { st: () => st, segEnd, finishStop, openSheet, view: () => view };
   });
 })();
