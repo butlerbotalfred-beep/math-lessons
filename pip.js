@@ -1,8 +1,8 @@
 // Ask Pip: Joshua taps the owl, says his question, and Pip answers out loud.
 // Speech-to-text is Safari's built-in recognizer; answers come from Claude through the ask-pip function.
 (function () {
-  const ENDPOINT = "https://rtqyrglnwbjqlxslrvpb.supabase.co/functions/v1/ask-pip";
-  const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ0cXlyZ2xud2JqcWx4c2xydnBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwNTcwNjIsImV4cCI6MjEwODYzMzA2Mn0.i7x1phVinvMaMGrLxsO0nynh38N8D5tPoTixeiRCpJ8";
+  const ENDPOINT = "https://nkumukzkrfdfnicozefu.supabase.co/functions/v1/ask-pip";
+  const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5rdW11a3prcmZkZm5pY296ZWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwNjExMzksImV4cCI6MjEwODYzNzEzOX0.FwbfSO-UxG4FtnHhJ4I66zJQKEF2j2tg9Ty0kcJKa1M";
   const page = (location.pathname.match(/\/(p\d+)\//) || [])[1] || "home";
   const HKEY = "pip-history:" + page;
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
