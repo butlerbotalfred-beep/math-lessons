@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Review Path</title>
+<link rel="apple-touch-icon" href="../icon.png">
+<link rel="stylesheet" href="../app.css">
+<link rel="stylesheet" href="../world/world.css">
+<link rel="stylesheet" href="../pip.css">
+<script src="../app.js"></script>
+</head>
+<body>
+<div id="world"></div>
+<audio id="voice" preload="auto"></audio>
+<script>
+// Page 47 as a walkable world. Made by tools/make_world_pages.py; change the settings there.
+// The clips and questions come from index.html's QUIZ; the worksheet is page 47 as printed.
+window.WORLD = {"id": "p47", "page": 47, "sheet": {"title": "Review", "parts": [{"kind": "sums", "title": "Find the sum.", "items": [[0, 0], [1, 1], [2, 2], [3, 3], [2, 3], [4, 2], [1, 0], [0, 2], [2, 1], [1, 3], [3, 2], [2, 4]]}, {"kind": "pics", "title": "Write the addition sentences.", "items": [[[3, 2], [1]], [[2], [2, 2]], [[1], [3, 2]], [[2, 2], [2]]]}, {"kind": "makes", "title": "Write the sums of 5.", "total": 5}, {"kind": "ask", "items": [{"text": "How many facts are there for the sum of 5?", "say": "How many facts are there for the sum of five? Count the facts you wrote.", "ans": 6, "why": "The answer is six. Let's count the facts for the sum of five. {one... two... three... four... five... six.} There are six facts."}]}]}, "quiz": {"asked": ["q5", "q6", "q7"]}};
+</script>
+<script src="../world/kinds.js"></script>
+<script src="../world/world.js"></script>
+<script src="../pip.js"></script>
+</body>
+</html>
