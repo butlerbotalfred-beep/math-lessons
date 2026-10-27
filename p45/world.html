@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pattern Path</title>
+<link rel="apple-touch-icon" href="../icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Lilita+One&display=swap">
+<link rel="stylesheet" href="../app.css">
+<link rel="stylesheet" href="../world/world.css">
+<link rel="stylesheet" href="../pip.css">
+<script src="../app.js"></script>
+</head>
+<body>
+<div id="world"></div>
+<audio id="voice" preload="auto"></audio>
+<script>
+// Page 45 as a walkable world. The clips and questions come from index.html's QUIZ; the worksheet is page 45 as printed.
+window.WORLD = {
+  id: "p45", page: 45,
+  // where the narrator finishes each answer after a question's pause, for the video whose length is revealTotal
+  revealTotal: 438.851,
+  reveal: [27.39, 99.18, 122.0, null, null, null, 299.21, 310.0, 342.29, 365.14, 391.27, null],
+  sheet: {
+    title: "Patterns of Addition",
+    // as printed: null is an empty box on the page
+    printed: [
+      [[0, 0], [1, 1], [2, null], [null, null]],
+      [[3, 3], [2, 3], [1, null], [null, null]],
+      [[5, 1], [4, 1], [3, 1], [2, null], [1, null], [null, null]],
+      [[1, 0], [2, 0], [3, 0], [4, null], [5, null], [null, null]],
+      [[5, 0], [4, 1], [3, 2], [2, null], [1, null], [null, null]]
+    ],
+    // the whole fact for every column, including "write the next fact"
+    facts: [
+      [[0, 0], [1, 1], [2, 2], [3, 3]],
+      [[3, 3], [2, 3], [1, 3], [0, 3]],
+      [[5, 1], [4, 1], [3, 1], [2, 1], [1, 1], [0, 1]],
+      [[1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0]],
+      [[5, 0], [4, 1], [3, 2], [2, 3], [1, 4], [0, 5]]
+    ]
+  }
+};
+</script>
+<script src="../world/world.js"></script>
+<script src="../pip.js"></script>
+</body>
+</html>
