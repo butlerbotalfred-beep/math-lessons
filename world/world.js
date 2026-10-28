@@ -6,6 +6,8 @@
 (function () {
   const CFG = window.WORLD;
   const KEY = "mathapp:" + CFG.id + ":world";
+  // questions the video's narrator asks right before it stops
+  const ASKED = (CFG.quiz && CFG.quiz.asked) || [];
   const VIEW = new URL("view3d.js", document.currentScript.src).href;
   // Our own audio element for spoken lines: app.js briefly plays and pauses #voice on the first tap to unlock it on
   // the iPad, which would cut off a line started by that same tap.
@@ -18,9 +20,12 @@
 
   function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+  // `then` runs when the line ends, or right away if it can't play; never for a line cut off by the next one.
+  let sayTok = 0;
   function say(src, then) {
     spoke = true;
-    try { voice.onended = then || null; voice.src = src; voice.currentTime = 0; voice.play().catch(() => {}); } catch (e) {}
+    const tok = ++sayTok, fin = () => { if (tok === sayTok && then) { sayTok++; then(); } };
+    try { voice.onended = fin; voice.onerror = fin; voice.src = src; voice.currentTime = 0; voice.play().catch(fin); } catch (e) { fin(); }
   }
   const line = (name, then) => say("../world/voice/" + name + ".mp3", then);
   const own = (name, then) => say("audio/" + name + ".mp3", then);
@@ -176,6 +181,28 @@
 
   // ---- question card (same parts and scoring as the lesson page) ----
   function swatch(name) { const s = el("span", "swatch"); s.style.background = COLORS[name.toLowerCase()] || name; return s; }
+  // Pictures in questions and answers: c:color, b:N blocks, d:top/bottom domino, m:left,right two-part box,
+  // t:N tally marks, g:color,N a bar graph row with the bar stopping at N. Anything else is shown as text.
+  const PICS = "bdmtg";
+  function pic(x) {
+    const k = x[0], v = x.slice(2);
+    if (k === "b") { const b = el("span", "pblocks"); for (let j = 0; j < +v; j++) b.appendChild(el("i")); return b; }
+    if (k === "d") { const [a, b] = v.split("/").map(Number), s = el("span", "pdom"); s.innerHTML = SheetPics.domSvg(a, b, 72); return s; }
+    if (k === "m") {
+      const m = el("span", "mat pmat");
+      v.split(",").map(Number).forEach(n => { const h = el("span", "half"); for (let j = 0; j < n; j++) h.appendChild(el("i")); m.appendChild(h); });
+      return m;
+    }
+    if (k === "t") { const s = el("span", "ptally"); s.innerHTML = SheetPics.tallySvg(+v); return s; }
+    if (k === "g") {
+      const [color, n] = v.split(","), g = el("span", "pgraph");
+      const cells = el("span", "pcells"); for (let j = 0; j < 6; j++) { const c = el("i"); if (j < +n) c.style.background = COLORS[color]; cells.appendChild(c); }
+      g.appendChild(cells);
+      const ax = el("span", "paxis"); for (let j = 0; j <= 6; j++) ax.appendChild(el("b", "", j)); g.appendChild(ax);
+      return g;
+    }
+  }
+  const isPic = x => x.length > 2 && x[1] === ":" && PICS.includes(x[0]);
   function showQuestion(i) {
     const q = Q[i];
     quiz.textContent = "";
@@ -184,7 +211,7 @@
     const worth = el("span", "worth"); head.appendChild(worth); card.appendChild(head);
     if (q.visual && q.visual.length) {
       const vis = el("div", "visual");
-      q.visual.forEach(x => vis.appendChild(x.startsWith("c:") ? swatch(x.slice(2)) : el("span", "vchip" + (x === "?" ? " q" : ""), x)));
+      q.visual.forEach(x => vis.appendChild(x.startsWith("c:") ? swatch(x.slice(2)) : isPic(x) ? pic(x) : el("span", "vchip" + (x === "?" ? " q" : ""), x)));
       card.appendChild(vis);
     }
     card.appendChild(el("h2", "prompt", q.prompt));
@@ -192,8 +219,11 @@
     const updateWorth = () => { const n = st.pts[i] || Math.max(1, 4 - st.tries[i]); worth.innerHTML = COIN.repeat(n); worth.setAttribute("aria-label", `${n} coins`); };
     q.choices.forEach((c, k) => {
       const b = el("button", "opt"); b.type = "button";
-      if (c.startsWith("c:")) b.appendChild(swatch(c.slice(2)));
-      b.appendChild(el("span", "", c.startsWith("c:") ? c.slice(2) : c));
+      if (isPic(c)) { b.classList.add("picopt"); b.appendChild(pic(c)); }
+      else {
+        if (c.startsWith("c:")) b.appendChild(swatch(c.slice(2)));
+        b.appendChild(el("span", "", c.startsWith("c:") ? c.slice(2) : c));
+      }
       b.onclick = () => {
         if (st.pts[i] || b.disabled) return;
         st.tries[i]++;
@@ -221,12 +251,21 @@
     card.appendChild(opts); card.appendChild(fb);
     const foot = el("div", "qfoot");
     const again = el("button", "btn", "Hear it again"); again.type = "button"; again.onclick = () => own(q.id);
-    foot.appendChild(again); card.appendChild(foot);
-    quiz.appendChild(card); quiz.hidden = false;
+    // Look: hide the card to see the paused video (the graph, the dominoes), then come back to answer
+    const look = el("button", "btn look"); look.type = "button";
+    look.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3.2"/></svg>Look at the video';
+    look.onclick = () => { voice.pause(); quiz.classList.add("peek"); };
+    foot.appendChild(again); foot.appendChild(look); card.appendChild(foot);
+    const backq = el("button", "backq"); backq.type = "button";
+    backq.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>Back to the question';
+    backq.onclick = () => { quiz.classList.remove("peek"); sfx.grow(); };
+    quiz.appendChild(backq); quiz.classList.remove("peek");
+    quiz.appendChild(card); quiz.hidden = false; bigplay.hidden = true;
     // First tap on an answer reads it aloud (app.js, through #voice), second tap picks it; stop our question voice first.
     card.addEventListener("click", () => voice.pause(), true);
-    try { if (window.LessonApp && LessonApp.confirmChoices) LessonApp.confirmChoices(card, q.id); } catch (e) {}
-    updateWorth(); own(q.id);
+    try { if (window.LessonApp && LessonApp.confirmChoices) LessonApp.confirmChoices(card, q.oid || q.id); } catch (e) {}
+    // The narrator usually asks the question just before the pause; then it is only said again on "Hear it again".
+    updateWorth(); if (!ASKED.includes(q.id)) own(q.id);
   }
 
   // ---- coins ----
@@ -256,19 +295,17 @@
     };
   }
   // ---- worksheet ----
-  let sheetEl, boxes = [], sel = null, maybe = null;
-  function boxList() {
-    const out = [];
-    CFG.sheet.printed.forEach((row, r) => row.forEach((pr, c) => {
-      const f = CFG.sheet.facts[r][c];
-      if (pr[0] == null) out.push({ id: `${r}-${c}-t`, r, c, part: "t", ans: f[0], say: () => line("ws-nextfact-top") });
-      if (pr[1] == null) out.push({ id: `${r}-${c}-b`, r, c, part: "b", ans: f[1], say: () => pr[0] == null ? line("ws-nextfact-bot") : own(`ws-m${pr[0]}`) });
-      out.push({ id: `${r}-${c}-a`, r, c, part: "a", ans: f[0] + f[1], say: () => pr[0] != null && pr[1] != null ? own(`ws-p${pr[0]}-${pr[1]}`) : line("ws-addthem") });
-    }));
-    return out;
-  }
-  const bs = id => st.sheet[id] || (st.sheet[id] = { tries: 0, ok: false, shown: false, last: null });
+  // The page's parts are laid out by world/kinds.js, which registers each answer box in the order the app asks it.
+  // The app picks each box in turn and one tap on a number answers. Three tries: wrong numbers go red, the right one
+  // green (1 coin). After three misses the answer goes in (green with a red border) and the box's explanation plays.
+  // Each box's question and explanation are pNN/ws/*.mp3, listed in pNN/ws/index.json (tools/ws_voice.py).
+  let sheetEl, boxes = [], sel = null, lock = false, wsVoice = {};
+  const bs = id => { const s = st.sheet[id] || (st.sheet[id] = { tries: 0, ok: false, shown: false, last: null }); s.wrong = s.wrong || []; return s; };
   const finished = b => bs(b.id).ok || bs(b.id).shown;
+  function wsSay(b, kind, then) {
+    const f = wsVoice[b.id] && wsVoice[b.id][kind];
+    if (f) say("ws/" + f, then); else if (then) then();
+  }
 
   function openSheet() {
     const last = Q[N - 1];
@@ -283,41 +320,42 @@
     sheetEl.querySelector(".paper").animate([{ transform: "scale(.2)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 480, easing: "cubic-bezier(.2,.8,.2,1)" });
     sfx.grow();
     if (boxes.every(finished)) { showDone(false); return; }
-    line("ws-intro", () => { if (!sel) selectBox(boxes.find(b => !finished(b))); });
+    lock = false; sel = boxes.find(b => !finished(b)); renderSheet();
+    sel.el.scrollIntoView({ block: "nearest" });
+    line("ws-intro", () => { if (sel) selectBox(sel); });
   }
   function buildSheet() {
-    boxes = boxList();
+    boxes = [];
     sheetEl = el("div", "sheetwrap"); sheetEl.hidden = true;
     const paper = el("div", "paper");
     const head = el("header");
     head.appendChild(el("h2", "", `${CFG.sheet.title} (page ${CFG.page})`));
     const hear = el("button", "hear"); hear.type = "button";
     hear.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 9v6h4l5 4V5L8 9H4z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M16 8.5a5 5 0 010 7M18.5 6a8.5 8.5 0 010 12"/></svg>Hear it';
-    hear.onclick = () => line("ws-intro");
+    hear.onclick = () => { if (sel && !lock) sel.say(); else if (!sel) line("ws-intro"); };
     const back = el("button", "hear back"); back.type = "button"; back.setAttribute("aria-label", "Back to the path");
     back.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Path';
     back.onclick = closeSheet;
     head.appendChild(hear); head.appendChild(back); paper.appendChild(head);
     const rows = el("div", "rows");
-    CFG.sheet.printed.forEach((row, r) => {
-      const rowEl = el("div", "row");
-      row.forEach((pr, c) => {
-        const f = el("div", "fact");
-        const cell = (part, val) => {
-          if (val != null) return el("span", "n", val);
-          const bx = boxes.find(b => b.id === `${r}-${c}-${part}`);
-          const btn = el("button", "box"); btn.type = "button"; btn.setAttribute("aria-label", "Answer box");
-          btn.onclick = () => { if (!finished(bx)) selectBox(bx); else bx.say(); };
-          bx.el = btn; return btn;
-        };
-        f.appendChild(cell("t", pr[0]));
-        f.appendChild(el("span", "plus", "+"));
-        f.appendChild(cell("b", pr[1]));
-        f.appendChild(el("span", "bar"));
-        f.appendChild(cell("a", null));
-        rowEl.appendChild(f);
-      });
-      rows.appendChild(rowEl);
+    CFG.sheet.parts.forEach((part, pi) => {
+      const sec = el("section", "part k-" + part.kind);
+      if (part.title) sec.appendChild(el("h3", "", part.title));
+      const api = {
+        el,
+        box(spec) {
+          const b = Object.assign({}, spec, { id: pi + "." + spec.id });
+          b.el = el("button", "box" + (spec.cls ? " " + spec.cls : "")); b.el.type = "button"; b.el.setAttribute("aria-label", "Answer box");
+          b.base = b.el.className;
+          b.say = () => wsSay(b, "q");
+          // boxes aren't picked by tapping: the current one repeats its question, a revealed one its explanation
+          b.el.onclick = () => { if (lock) return; if (b === sel) b.say(); else if (bs(b.id).shown) explain(b); };
+          boxes.push(b);
+          return b.el;
+        }
+      };
+      SheetKinds[part.kind](part, api, sec);
+      rows.appendChild(sec);
     });
     paper.appendChild(rows);
     const pad = el("div", "pad");
@@ -333,48 +371,55 @@
   }
   function renderSheet() {
     boxes.forEach(b => {
-      const s = bs(b.id), e = b.el;
-      e.className = "box" + (s.ok ? " good" : s.shown ? " shown" : s.last != null ? " bad" : "") + (sel === b ? " sel" : "");
-      e.textContent = s.ok || s.shown ? b.ans : sel === b && maybe != null ? maybe : s.last != null ? s.last : "";
-      if (sel === b && maybe != null && !s.ok) e.classList.add("maybe"), e.classList.remove("bad");
+      const s = bs(b.id), e = b.el, fin = s.ok || s.shown;
+      e.className = b.base + (s.ok ? " good" : s.shown ? " shown" : s.last != null ? " bad" : "") + (sel === b ? " sel" : "");
+      if (b.draw && fin) b.draw(e, b.ans);
+      else e.textContent = fin ? b.ans : s.last != null ? s.last : "";
+      if (fin && b.onDone) b.onDone();
     });
-    sheetEl.querySelectorAll(".key").forEach(k => { k.classList.toggle("maybe", +k.dataset.n === maybe); k.disabled = !sel; });
+    const tried = sel ? bs(sel.id).wrong : [];
+    sheetEl.querySelectorAll(".key").forEach(k => {
+      const n = +k.dataset.n;
+      k.classList.toggle("bad", tried.includes(n));
+      k.disabled = !sel || lock || tried.includes(n);
+    });
   }
   function selectBox(b) {
     if (!b) return;
-    sel = b; maybe = null; renderSheet();
+    sel = b; renderSheet();
     b.el.scrollIntoView({ block: "nearest", behavior: "smooth" });
     b.say();
   }
+  const explain = (b, then) => wsSay(b, "x", then);
   function tapKey(n, key) {
-    if (!sel || finished(sel)) return;
-    if (maybe !== n) { maybe = n; renderSheet(); line("num" + n); return; }
+    if (!sel || lock || finished(sel)) return;
     const b = sel, s = bs(b.id);
-    s.tries++; maybe = null;
+    if (s.wrong.includes(n)) return;
+    s.tries++;
+    b.el.classList.remove("shake"); void b.el.offsetWidth;
     if (n === b.ans) {
-      s.ok = true; s.last = null; save(); sel = null; renderSheet();
-      sfx.chime(); line("ws-right" + (1 + boxes.filter(x => bs(x.id).ok).length % 3));
-      flyCoin(b.el);
-      reportSheet();
-      setTimeout(() => nextBox(b), 1500);
+      s.ok = true; s.last = null; save(); lock = true; renderSheet();
+      key.classList.add("good");
+      sfx.chime(); flyCoin(b.el); reportSheet();
+      line("ws-right" + (1 + boxes.filter(x => bs(x.id).ok).length % 3), () => { key.classList.remove("good"); nextBox(); });
     } else {
-      s.last = n;
+      s.wrong.push(n); s.last = n;
       sfx.buzz();
-      b.el.classList.remove("shake"); void b.el.offsetWidth;
       if (s.tries >= 3) {
-        s.shown = true; save(); sel = null; renderSheet(); line("ws-reveal"); reportSheet();
-        setTimeout(() => nextBox(b), 3400);
+        s.shown = true; s.last = null; save(); lock = true; renderSheet(); reportSheet();
+        b.el.classList.add("shake");
+        setTimeout(() => { if (lock && !sheetEl.hidden) explain(b, nextBox); }, 700);
       } else {
         save(); renderSheet(); b.el.classList.add("shake"); line(s.tries === 1 ? "ws-wrong1" : "ws-wrong2");
       }
     }
   }
-  function closeSheet() { voice.pause(); sel = null; maybe = null; sheetEl.hidden = true; busy = false; renderSigns(); }
-  function nextBox(after) {
-    if (sel || sheetEl.hidden) return;
-    const i = boxes.indexOf(after);
-    const next = boxes.slice(i + 1).concat(boxes.slice(0, i)).find(b => !finished(b));
-    if (next) selectBox(next); else showDone(true);
+  function closeSheet() { voice.pause(); sayTok++; sel = null; lock = false; sheetEl.hidden = true; busy = false; renderSigns(); }
+  function nextBox() {
+    if (sheetEl.hidden) return;
+    lock = false;
+    const next = boxes.find(b => !finished(b));
+    if (next) selectBox(next); else { sel = null; renderSheet(); showDone(true); }
   }
   function flyCoin(fromEl) {
     const c = el("span", "coin"); const r = fromEl.getBoundingClientRect();
@@ -409,6 +454,9 @@
   }
   fetch(CFG.lesson || "index.html").then(r => r.text()).then(async html => {
     QUIZ = quizFrom(html); Q = QUIZ.questions; N = Q.length;
+    // page fixes to the lesson's questions, e.g. picture answers ({ q5: { choices: [...], oid: "q5p" } })
+    const fix = (CFG.quiz && CFG.quiz.fix) || {};
+    Q.forEach(q => Object.assign(q, fix[q.id] || {}));
     st = load(); save();
     const { createView } = await import(VIEW);
     view = createView({ container: document.getElementById("world"), N, onTap: tapSign, onArrive: arrive, onPick: p => collect(p) });
@@ -424,6 +472,9 @@
       if (!spoke) { voice.muted = true; voice.src = "../world/voice/arrive.mp3"; const p = voice.play(), done = () => { if (!spoke) voice.pause(); voice.muted = false; }; if (p && p.then) p.then(done, done); else done(); }
     };
     addEventListener("click", greet);
-    window.WorldDebug = { st: () => st, segEnd, finishStop, openSheet, view: () => view };
+    fetch("ws/index.json").then(r => r.json()).then(m => { wsVoice = m; }).catch(() => {});
+    window.WorldDebug = { st: () => st, segEnd, finishStop, openSheet, openClip, view: () => view,
+      // every worksheet box's id and spoken texts, for tools/ws_voice.py
+      sheetTexts: () => { if (!sheetEl) buildSheet(); return boxes.map(b => ({ id: b.id, ans: b.ans, ask: b.ask, why: b.why })); } };
   });
 })();

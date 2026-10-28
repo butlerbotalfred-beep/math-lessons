@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Graph Path</title>
+<link rel="apple-touch-icon" href="../icon.png">
+<link rel="stylesheet" href="../app.css">
+<link rel="stylesheet" href="../world/world.css">
+<link rel="stylesheet" href="../pip.css">
+<script src="../app.js"></script>
+</head>
+<body>
+<div id="world"></div>
+<audio id="voice" preload="auto"></audio>
+<script>
+// Page 46 as a walkable world. Made by tools/make_world_pages.py; change the settings there.
+// The clips and questions come from index.html's QUIZ; the worksheet is page 46 as printed.
+window.WORLD = {"id": "p46", "page": 46, "sheet": {"title": "Make a Graph", "parts": [{"kind": "tallies", "title": "Count the facts for each sum.", "facts": [["0 + 1 = 1", "1 + 0 = 1"], ["0 + 2 = 2", "2 + 0 = 2", "1 + 1 = 2"], ["0 + 3 = 3", "3 + 0 = 3", "1 + 2 = 3", "2 + 1 = 3"], ["0 + 4 = 4", "4 + 0 = 4", "1 + 3 = 4", "3 + 1 = 4", "2 + 2 = 4"], ["0 + 5 = 5", "5 + 0 = 5", "1 + 4 = 5", "4 + 1 = 5", "2 + 3 = 5", "3 + 2 = 5"]]}, {"kind": "graph", "title": "Color the graph.", "counts": [2, 3, 4, 5, 6], "given": 1}, {"kind": "ask", "title": "Use the graph.", "items": [{"text": "How many facts for the sum of 3?", "say": "How many facts are there for the sum of three?", "ans": 4, "why": "The answer is four. Look at the bar for three. It stops at four."}, {"text": "Which number has the most facts?", "say": "Which number has the most facts? Look for the longest bar.", "ans": 5, "why": "The answer is five. The bar for five is the longest. It stops at six."}, {"text": "Which number has the fewest facts?", "say": "Which number has the fewest facts? Look for the shortest bar.", "ans": 1, "why": "The answer is one. The bar for one is the shortest. It stops at two."}, {"text": "How many facts for the sums of 3 and 1 together?", "say": "How many facts are there for the sum of three and the sum of one, all together?", "ans": 6, "why": "The answer is six. The sum of three has four facts. The sum of one has two facts. Start at four, and count on two more. {five... six.} So there are six facts in all."}]}]}, "quiz": {"asked": ["q3", "q5", "q6", "q7", "q8"], "fix": {"q3": {"choices": ["t:1", "t:2", "t:3", "t:5"], "oid": "q3p"}, "q4": {"choices": ["t:3", "t:4", "t:2", "t:6"], "oid": "q4p"}, "q5": {"choices": ["g:green,1", "g:green,2", "g:green,3", "g:green,6"], "oid": "q5p"}}}};
+</script>
+<script src="../world/kinds.js"></script>
+<script src="../world/world.js"></script>
+<script src="../pip.js"></script>
+</body>
+</html>

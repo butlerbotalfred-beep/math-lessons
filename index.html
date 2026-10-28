@@ -156,11 +156,11 @@ td.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
 <script>
 // Each lesson page saves its results under "mathapp:<page>" (see app.js).
 const LESSONS = [
-  { id: "p45", page: 45, title: "Patterns Don't Always Repeat!", q: 12, sheet: false, color: "--t45", world: true },
-  { id: "p46", page: 46, title: "Make a Graph!", q: 11, sheet: true, color: "--t46" },
-  { id: "p47", page: 47, title: "Review Day: Sums of 5", q: 10, sheet: true, color: "--t47" },
-  { id: "p48", page: 48, title: "Domino Facts and Turnarounds", q: 10, sheet: true, color: "--t48" },
-  { id: "p49", page: 49, title: "Draw Circles to Show Addition!", q: 9, sheet: true, color: "--t49" },
+  { id: "p45", page: 45, title: "Patterns Don't Always Repeat!", q: 12, sheet: true, color: "--t45", world: true },
+  { id: "p46", page: 46, title: "Make a Graph!", q: 11, sheet: true, color: "--t46", world: true },
+  { id: "p47", page: 47, title: "Review Day: Sums of 5", q: 10, sheet: true, color: "--t47", world: true },
+  { id: "p48", page: 48, title: "Domino Facts and Turnarounds", q: 10, sheet: true, color: "--t48", world: true },
+  { id: "p49", page: 49, title: "Draw Circles to Show Addition!", q: 9, sheet: true, color: "--t49", world: true },
 ];
 // lessons with a walkable world open there; the plain video page stays at pNN/index.html
 function page(L) { return L.id + (L.world ? "/world.html" : "/index.html"); }
