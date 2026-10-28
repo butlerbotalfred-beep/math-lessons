@@ -475,6 +475,6 @@
     fetch("ws/index.json").then(r => r.json()).then(m => { wsVoice = m; }).catch(() => {});
     window.WorldDebug = { st: () => st, segEnd, finishStop, openSheet, openClip, view: () => view,
       // every worksheet box's id and spoken texts, for tools/ws_voice.py
-      sheetTexts: () => { if (!sheetEl) buildSheet(); return boxes.map(b => ({ id: b.id, ask: b.ask, why: b.why })); } };
+      sheetTexts: () => { if (!sheetEl) buildSheet(); return boxes.map(b => ({ id: b.id, ans: b.ans, ask: b.ask, why: b.why })); } };
   });
 })();
