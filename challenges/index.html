@@ -1,0 +1,34 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="apple-touch-icon" href="../icon.png">
+<title>Steve's Challenges</title>
+<link rel="stylesheet" href="challenges.css">
+</head><body>
+<nav class="top">
+  <a class="back" href="../index.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Home</a>
+</nav>
+<main class="wrap">
+  <h1 class="sign outline">Steve's Challenges</h1>
+  <div class="shelf" id="shelf"></div>
+  <a class="gp" href="grownups.html" style="display:block;text-decoration:none;color:inherit">
+    <h2>For grown-ups</h2>
+    <p class="muted">Results, reading recordings to mark, and the writing task card. Needs the grown-ups code.</p>
+  </a>
+</main>
+<script src="store.js"></script>
+<script>
+const TROPHY = '<svg class="won" viewBox="0 0 24 24" aria-label="Finished"><path fill="#ffc531" stroke="#8a5a00" stroke-width=".6" d="M6 3h12v3h3v2a5 5 0 0 1-4.6 5A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1A5 5 0 0 1 7.6 13 5 5 0 0 1 3 8V6h3zm0 5V8H5a3 3 0 0 0 1.4 2.5A7 7 0 0 1 6 8zm12 0a7 7 0 0 1-.4 2.5A3 3 0 0 0 19 8z"/></svg>';
+fetch("exams/list.json", { cache: "no-cache" }).then(r => r.json()).then(list => {
+  const shelf = document.getElementById("shelf");
+  list.forEach(x => {
+    const a = document.createElement(x.ready ? "a" : "div");
+    a.className = "ch" + (x.ready ? "" : " locked");
+    if (x.ready) a.href = "play.html?e=" + x.id;
+    const r = ChallengeStore.local(x.id);
+    a.innerHTML = `<span class="emo">${x.emoji}</span><span class="nm"></span>${r.done ? TROPHY : ""}`;
+    a.querySelector(".nm").textContent = x.title;
+    shelf.appendChild(a);
+  });
+});
+</script>
+</body></html>
