@@ -1,0 +1,15 @@
+[
+  { "id": "sample", "title": "Try-Out Challenge", "emoji": "⭐", "ready": true },
+  { "id": "e01", "title": "Warm-Up Mix", "emoji": "🌞" },
+  { "id": "e02", "title": "Letters and Sounds", "emoji": "🔤" },
+  { "id": "e03", "title": "Reading: Words", "emoji": "📖" },
+  { "id": "e04", "title": "Number Sense", "emoji": "🔢" },
+  { "id": "e05", "title": "Logic Puzzles 1", "emoji": "🧩" },
+  { "id": "e06", "title": "Reading: Sentences", "emoji": "📚" },
+  { "id": "e07", "title": "Math in Action", "emoji": "➕" },
+  { "id": "e08", "title": "Words and Listening", "emoji": "👂" },
+  { "id": "e09", "title": "Science and Nature", "emoji": "🌱" },
+  { "id": "e10", "title": "People and Places", "emoji": "🗺️" },
+  { "id": "e11", "title": "Logic Puzzles 2", "emoji": "🧠" },
+  { "id": "e12", "title": "Faith and Finale", "emoji": "✝️" }
+]
